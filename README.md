@@ -59,6 +59,16 @@ L'application utilise Firebase pour le stockage et l'authentification. Pour conf
 4. Téléchargez le fichier `google-services.json` et placez-le dans le dossier `app/`
 5. Assurez-vous que les services d'authentification et de base de données en temps réel sont activés
 
+### Environment setup
+
+Copiez le fichier `.env.example` vers `.env` et remplissez les valeurs obtenues depuis la console Firebase :
+
+```bash
+cp .env.example .env
+```
+
+Ces variables d'environnement sont lues dans `config/app.ts` pour initialiser Firebase.
+
 ## 📊 Structure du Projet
 
 ```
