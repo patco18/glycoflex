@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import LinearGradient from 'expo-linear-gradient';
 import { Calendar, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
-import { GlucoseMeasurement } from '@/utils/storage';
+import { GlucoseMeasurement } from '@/types/glucose';
 import { calculateStats, GlucoseStats } from '@/utils/glucose';
 
 interface ComparisonAnalysisProps {
