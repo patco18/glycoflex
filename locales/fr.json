@@ -1,0 +1,170 @@
+{
+  "common": {
+    "save": "Sauvegarder",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "add": "Ajouter",
+    "history": "Historique",
+    "settings": "Paramètres"
+  },
+  "home": {
+    "title": "Suivi Glycémique",
+    "subtitle": "Tableau de bord",
+    "lastMeasurement": "Dernière mesure",
+    "noMeasurements": "Aucune mesure",
+    "addFirstMeasurement": "Commencez par ajouter votre première mesure",
+    "recentMeasurements": "Mesures récentes",
+    "chart": "Graphique",
+    "days7": "7J",
+    "days30": "30J"
+  },
+  "add": {
+    "title": "Nouvelle Mesure",
+    "subtitle": "Enregistrez votre taux de glycémie",
+    "value": "Valeur",
+    "unit": "{{unit}}",
+    "measurementType": "Type de mesure",
+    "notes": "Notes (optionnel)",
+    "notesPlaceholder": "Ajoutez des notes sur votre mesure...",
+    "dateTime": "Date et heure",
+    "currentDateTime": "Date et heure actuelles",
+    "selectDate": "Sélectionner la date",
+    "selectTime": "Sélectionner l'heure",
+    "resetDateTime": "Réinitialiser",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "types": {
+      "fasting": "À jeun",
+      "beforeMeal": "Avant repas",
+      "afterMeal": "Après repas",
+      "bedtime": "Coucher",
+      "random": "Aléatoire"
+    },
+    "status": {
+      "low": "⚠️ Glycémie basse",
+      "high": "⚠️ Glycémie élevée",
+      "normal": "✅ Glycémie normale"
+    },
+    "errors": {
+      "invalidValue": "Veuillez entrer une valeur valide",
+      "outOfRange": "La valeur doit être entre {{min}} et {{max}} {{unit}}",
+      "saveFailed": "Impossible d'enregistrer la mesure"
+    },
+    "success": {
+      "saved": "Mesure enregistrée avec succès",
+      "lowWarning": "\n⚠️ Attention : Glycémie basse",
+      "highWarning": "\n⚠️ Attention : Glycémie élevée",
+      "normal": "\n✅ Glycémie normale"
+    }
+  },
+  "history": {
+    "title": "Historique",
+    "measurements": "{{count}} mesure",
+    "measurements_plural": "{{count}} mesures",
+    "filters": {
+      "all": "Tout",
+      "today": "Aujourd'hui",
+      "week": "7 jours",
+      "month": "30 jours"
+    },
+    "noData": "Aucune mesure",
+    "noDataSubtitle": "Aucune mesure trouvée pour cette période",
+    "deleteConfirm": "Supprimer la mesure",
+    "deleteMessage": "Êtes-vous sûr de vouloir supprimer cette mesure ?",
+    "status": {
+      "low": "Bas",
+      "high": "Élevé",
+      "normal": "Normal"
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Personnalisez votre suivi",
+    "profile": "Profil",
+    "name": "Nom",
+    "age": "Âge",
+    "targets": "Objectifs glycémiques",
+    "targetsDescription": "Définissez votre plage cible de glycémie en {{unit}}",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "notifications": "Notifications",
+    "reminders": "Rappels de mesure",
+    "remindersDescription": "Recevoir des rappels pour prendre vos mesures",
+    "language": "Langue",
+    "timezone": "Fuseau horaire",
+    "accessibility": "Accessibilité",
+    "highContrast": "Contraste élevé",
+    "largeText": "Texte agrandi",
+    "screenReader": "Support lecteur d'écran",
+    "info": "Informations",
+    "normalRanges": "Plages normales de glycémie",
+    "fasting": "À jeun : {{min}}-{{max}} {{unit}}",
+    "postMeal": "Post-prandial : {{min}}-{{max}} {{unit}}",
+    "random": "Aléatoire : {{min}}-{{max}} {{unit}}",
+    "warning": "⚠️ Ces valeurs sont indicatives. Consultez votre médecin pour des recommandations personnalisées.",
+    "languages": {
+      "en": "English",
+      "fr": "Français"
+    },
+    "units": {
+      "mgdl": "mg/dL",
+      "mmoll": "mmol/L"
+    }
+  },
+  "analytics": {
+    "predictive": "Analyse Prédictive",
+    "comparison": "Analyse Comparative",
+    "export": "Export PDF/Rapport",
+    "chart": "Graphique",
+    "trendDescriptions": {
+      "increasing": "Tendance à la hausse",
+      "decreasing": "Tendance à la baisse",
+      "stable": "Tendance stable"
+    },
+    "confidence": "Confiance : {{percent}}%",
+    "nextValue": "Prochaine valeur estimée",
+    "riskLevel": "Niveau de risque",
+    "risk": {
+      "low": "BAS",
+      "medium": "MOYEN",
+      "high": "ÉLEVÉ"
+    },
+    "recommendation": "Recommandation",
+    "timeInRange": "Temps dans la cible",
+    "timeInRangeDescription": "Pourcentage de mesures dans la plage normale ({{min}}-{{max}} {{unit}})",
+    "average": "Moyenne",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "trend": "Tendance",
+    "insufficientData": "Plus de données nécessaires pour la comparaison",
+    "insufficientPredictive": "Au moins 3 mesures sont nécessaires pour l'analyse prédictive"
+  },
+  "notifications": {
+    "title": "🩸 Rappel Glycémie",
+    "body": "Il est temps de prendre votre mesure de glycémie",
+    "lowAlert": "⚠️ Glycémie Basse",
+    "highAlert": "⚠️ Glycémie Élevée",
+    "lowMessage": "Attention : {{value}} {{unit}} - Consommez des glucides rapidement",
+    "highMessage": "Attention : {{value}} {{unit}} - Consultez votre médecin",
+    "permissionTitle": "Notifications",
+    "permissionMessage": "Nous avons besoin de votre permission pour afficher les notifications",
+    "grantPermission": "Accorder la permission",
+    "automaticReminders": "Rappels automatiques",
+    "reminderDescription": "Recevoir des rappels pour prendre vos mesures",
+    "reminderTimes": "Heures de rappel :",
+    "permissionStatus": "Statut des permissions :",
+    "granted": "✅ Autorisées",
+    "denied": "❌ Non autorisées"
+  }
+}

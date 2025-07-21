@@ -1,0 +1,42 @@
+{
+  "cli": {
+    "version": ">= 13.2.1"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease"
+      }
+    },
+    "production-apk": {
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "../path/to/api-key.json",
+        "track": "internal"
+      }
+    }
+  }
+}
