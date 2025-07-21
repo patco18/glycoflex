@@ -56,7 +56,7 @@ L'application utilise Firebase pour le stockage et l'authentification. Pour conf
 1. Créez un projet Firebase sur la [console Firebase](https://console.firebase.google.com/)
 2. Ajoutez une application Android/iOS à votre projet Firebase
 3. Copiez le fichier `.env.example` en `.env` et renseignez les valeurs de votre projet
-4. Téléchargez le fichier `google-services.json` et placez-le dans le dossier `app/`
+4. Téléchargez le fichier `google-services.json` depuis la console Firebase. Ce fichier, ignoré par Git, doit être placé manuellement dans le dossier `app/`.
 5. Assurez-vous que les services d'authentification et de base de données en temps réel sont activés
 
 ### Environment setup
