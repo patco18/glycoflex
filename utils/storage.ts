@@ -1,12 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export interface GlucoseMeasurement {
-  id: string;
-  value: number;
-  type: string;
-  timestamp: number;
-  notes?: string;
-}
+import { GlucoseMeasurement } from '@/types/glucose';
 
 const STORAGE_KEY = 'glucose_measurements';
 

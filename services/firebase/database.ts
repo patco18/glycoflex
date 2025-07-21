@@ -16,7 +16,7 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 import { db } from "./config";
-import { GlucoseMeasurement } from "../../types/glucose.d";
+import { GlucoseMeasurement } from "../../types/glucose";
 
 // Interface pour les mesures de glucose stockées dans Firestore
 interface FirestoreGlucoseMeasurement {
@@ -47,8 +47,8 @@ interface FirestoreUserPreferences {
 const toFirestoreMeasurement = (measurement: GlucoseMeasurement): FirestoreGlucoseMeasurement => {
   return {
     value: measurement.value,
-    date: Timestamp.fromDate(new Date(measurement.date)),
-    unit: measurement.unit,
+    date: Timestamp.fromDate(new Date(measurement.timestamp)),
+    unit: measurement.unit || "mgdl",
     notes: measurement.notes,
     mealContext: measurement.mealContext,
     syncedAt: serverTimestamp() as Timestamp,
@@ -63,7 +63,7 @@ const fromFirestoreMeasurement = (id: string, data: FirestoreGlucoseMeasurement)
   return {
     id,
     value: data.value,
-    date: data.date.toDate().toISOString(),
+    timestamp: data.date.toDate().getTime(),
     unit: data.unit,
     notes: data.notes || "",
     mealContext: data.mealContext || "",

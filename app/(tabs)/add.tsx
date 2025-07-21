@@ -5,7 +5,6 @@ import LinearGradient from 'expo-linear-gradient';
 import { Calendar, Clock, Activity, Save, Check, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { addMeasurement } from '@/utils/storage';
-import { GlucoseMeasurement } from '@/types/glucose';
 import { getGlucoseStatus } from '@/utils/glucose';
 import { sendGlucoseAlert } from '@/components/NotificationManager';
 import { useSettings } from '@/contexts/SettingsContext';
