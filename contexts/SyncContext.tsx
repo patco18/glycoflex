@@ -5,6 +5,7 @@ import { GlucoseMeasurement, SyncStatus } from '../types/glucose';
 import * as Auth from '../services/firebase/auth';
 import * as Sync from '../services/firebase/sync';
 import * as Database from '../services/firebase/database';
+import logger from '../utils/logger';
 
 interface SyncContextType {
   syncStatus: SyncStatus;
@@ -123,7 +124,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         setMeasurements(JSON.parse(storedMeasurements));
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des mesures locales:', error);
+      logger.error('Erreur lors du chargement des mesures locales:', error);
     }
   };
 
@@ -134,7 +135,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       const queue = queueString ? JSON.parse(queueString) : [];
       setSyncStatus(prev => ({ ...prev, pendingChanges: queue.length }));
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du compteur de changements:', error);
+      logger.error('Erreur lors de la mise à jour du compteur de changements:', error);
     }
   };
 
@@ -161,7 +162,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       
       // Sauvegarder dans AsyncStorage
       AsyncStorage.setItem('glucose_measurements', JSON.stringify(mergedMeasurements))
-        .catch(error => console.error('Erreur lors de la sauvegarde des mesures:', error));
+        .catch(error => logger.error('Erreur lors de la sauvegarde des mesures:', error));
       
       return mergedMeasurements;
     });
@@ -184,7 +185,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         syncNow();
       }
     } catch (error) {
-      console.error('Erreur lors de la modification des préférences de synchronisation:', error);
+      logger.error('Erreur lors de la modification des préférences de synchronisation:', error);
     }
   };
 
@@ -221,7 +222,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       
       return success;
     } catch (error) {
-      console.error('Erreur lors de la synchronisation:', error);
+      logger.error('Erreur lors de la synchronisation:', error);
       setSyncStatus(prev => ({ 
         ...prev, 
         isSyncing: false, 
@@ -238,7 +239,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     setMeasurements(prev => {
       const updated = [...prev, newMeasurement];
       AsyncStorage.setItem('glucose_measurements', JSON.stringify(updated))
-        .catch(error => console.error('Erreur lors de la sauvegarde des mesures:', error));
+        .catch(error => logger.error('Erreur lors de la sauvegarde des mesures:', error));
       return updated;
     });
     
@@ -271,7 +272,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     setMeasurements(prev => {
       const updated = prev.map(m => (m.id === id ? { ...measurement, id } : m));
       AsyncStorage.setItem('glucose_measurements', JSON.stringify(updated))
-        .catch(error => console.error('Erreur lors de la sauvegarde des mesures:', error));
+        .catch(error => logger.error('Erreur lors de la sauvegarde des mesures:', error));
       return updated;
     });
     
@@ -304,7 +305,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
     setMeasurements(prev => {
       const updated = prev.filter(m => m.id !== id);
       AsyncStorage.setItem('glucose_measurements', JSON.stringify(updated))
-        .catch(error => console.error('Erreur lors de la sauvegarde des mesures:', error));
+        .catch(error => logger.error('Erreur lors de la sauvegarde des mesures:', error));
       return updated;
     });
     
@@ -341,7 +342,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
         syncNow();
       }
     } catch (error) {
-      console.error('Erreur lors de la connexion:', error);
+      logger.error('Erreur lors de la connexion:', error);
       throw error;
     }
   };
@@ -352,7 +353,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       await Auth.signUpWithEmail(email, password);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Erreur lors de l\'inscription:', error);
+      logger.error('Erreur lors de l\'inscription:', error);
       throw error;
     }
   };
@@ -363,7 +364,7 @@ export const SyncProvider: React.FC<SyncProviderProps> = ({ children }) => {
       await Auth.signOut();
       setIsAuthenticated(false);
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+      logger.error('Erreur lors de la déconnexion:', error);
       throw error;
     }
   };

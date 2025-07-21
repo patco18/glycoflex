@@ -29,13 +29,13 @@ try {
     app = getApp();
   }
 } catch (error) {
-  console.error('Error during Firebase initialization in config.ts:', error);
+  logger.error('Error during Firebase initialization in config.ts:', error);
   // En cas d'erreur, essayer encore une fois d'initialiser
   try {
     app = initializeApp(firebaseConfig);
     logger.log('Second attempt to initialize Firebase successful');
   } catch (innerError) {
-    console.error('Second attempt at Firebase initialization failed:', innerError);
+    logger.error('Second attempt at Firebase initialization failed:', innerError);
     throw new Error('Firebase initialization failed completely. Check network and credentials.');
   }
 }
@@ -49,16 +49,16 @@ try {
   if (Platform.OS === 'web') {
     setPersistence(auth, browserLocalPersistence)
       .then(() => logger.log('Firebase Auth initialized with browser persistence'))
-      .catch(error => console.error('Error setting auth persistence:', error));
+      .catch(error => logger.error('Error setting auth persistence:', error));
   } else {
     // Sur mobile, nous utilisons notre propre mécanisme de persistance via AsyncStorage
     // car la persistence native n'est pas bien supportée dans Firebase v12
     setPersistence(auth, inMemoryPersistence)
       .then(() => logger.log('Firebase Auth initialized with in-memory persistence (custom persistence via AsyncStorage will be used)'))
-      .catch(error => console.error('Error setting auth persistence:', error));
+      .catch(error => logger.error('Error setting auth persistence:', error));
   }
 } catch (error) {
-  console.error('Error configuring auth persistence:', error);
+  logger.error('Error configuring auth persistence:', error);
 }
 
 logger.log('Firebase Auth initialized. Using custom persistence with AsyncStorage from auth-persistence.ts');

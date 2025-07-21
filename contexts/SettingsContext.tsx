@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { changeLanguage } from '@/utils/i18n';
+import logger from '@/utils/logger';
 
 export type GlucoseUnit = 'mgdl' | 'mmoll';
 export type Language = 'fr' | 'en';
@@ -95,7 +96,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         setAccessibilitySettings({ ...defaultAccessibilitySettings, ...parsed });
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des paramètres:', error);
+      logger.error('Erreur lors du chargement des paramètres:', error);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +113,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
         changeLanguage(value as string);
       }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des paramètres utilisateur:', error);
+      logger.error('Erreur lors de la sauvegarde des paramètres utilisateur:', error);
     }
   };
 
@@ -122,7 +123,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
       setAccessibilitySettings(newSettings);
       await AsyncStorage.setItem('accessibilitySettings', JSON.stringify(newSettings));
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des paramètres d\'accessibilité:', error);
+      logger.error('Erreur lors de la sauvegarde des paramètres d\'accessibilité:', error);
     }
   };
 

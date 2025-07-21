@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, Share } from
 import { FileText, Download, Share2 } from 'lucide-react-native';
 import { GlucoseMeasurement } from '@/types/glucose';
 import { calculateStats, getGlucoseStatus } from '@/utils/glucose';
+import logger from '@/utils/logger';
 
 interface PDFExportProps {
   measurements: GlucoseMeasurement[];
@@ -135,7 +136,7 @@ Date d'export: ${now.toLocaleString('fr-FR')}
         });
       }
     } catch (error) {
-      console.error('Erreur lors de l\'export:', error);
+      logger.error('Erreur lors de l\'export:', error);
       Alert.alert('Erreur', 'Impossible d\'exporter le rapport');
     } finally {
       setIsGenerating(false);

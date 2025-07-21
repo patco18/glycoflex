@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GlucoseMeasurement } from '@/types/glucose';
+import logger from '@/utils/logger';
 
 const STORAGE_KEY = 'glucose_measurements';
 
@@ -13,7 +14,7 @@ export const getStoredMeasurements = async (): Promise<GlucoseMeasurement[]> => 
     }
     return [];
   } catch (error) {
-    console.error('Erreur lors du chargement des mesures:', error);
+    logger.error('Erreur lors du chargement des mesures:', error);
     return [];
   }
 };
@@ -29,7 +30,7 @@ export const addMeasurement = async (measurement: Omit<GlucoseMeasurement, 'id'>
     measurements.unshift(newMeasurement);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(measurements));
   } catch (error) {
-    console.error('Erreur lors de l\'ajout de la mesure:', error);
+    logger.error('Erreur lors de l\'ajout de la mesure:', error);
     throw error;
   }
 };
@@ -40,7 +41,7 @@ export const removeMeasurement = async (id: string): Promise<void> => {
     const filtered = measurements.filter(m => m.id !== id);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
   } catch (error) {
-    console.error('Erreur lors de la suppression de la mesure:', error);
+    logger.error('Erreur lors de la suppression de la mesure:', error);
     throw error;
   }
 };
@@ -49,7 +50,7 @@ export const clearAllMeasurements = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(STORAGE_KEY);
   } catch (error) {
-    console.error('Erreur lors de la suppression de toutes les mesures:', error);
+    logger.error('Erreur lors de la suppression de toutes les mesures:', error);
     throw error;
   }
 };

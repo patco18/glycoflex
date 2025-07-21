@@ -41,7 +41,7 @@ const setupAuthListener = async () => {
         await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
         logger.log('Firebase Auth data saved to AsyncStorage');
       } catch (error) {
-        console.error('Error saving auth data to AsyncStorage:', error);
+        logger.error('Error saving auth data to AsyncStorage:', error);
       }
     } else {
       // Effacer les données lors de la déconnexion
@@ -50,7 +50,7 @@ const setupAuthListener = async () => {
         await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
         logger.log('Firebase Auth data cleared from AsyncStorage');
       } catch (error) {
-        console.error('Error clearing auth data from AsyncStorage:', error);
+        logger.error('Error clearing auth data from AsyncStorage:', error);
       }
     }
   });
@@ -60,7 +60,7 @@ const setupAuthListener = async () => {
     const userData = await AsyncStorage.getItem(AUTH_USER_KEY);
     return !!userData; // Retourne true si des données utilisateur existent
   } catch (error) {
-    console.error('Error checking for stored auth data:', error);
+    logger.error('Error checking for stored auth data:', error);
     return false;
   }
 }

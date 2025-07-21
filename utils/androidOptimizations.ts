@@ -2,6 +2,7 @@ import { Platform, BackHandler, ToastAndroid, Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/utils/logger';
 
 // Configuration spécifique Android
 export const AndroidConfig = {
@@ -116,7 +117,7 @@ export const setupAndroidNotificationChannels = async () => {
     });
 
   } catch (error) {
-    console.error('Erreur lors de la configuration des canaux de notification:', error);
+    logger.error('Erreur lors de la configuration des canaux de notification:', error);
   }
 };
 
@@ -134,7 +135,7 @@ export const optimizeAndroidPerformance = async () => {
       await AsyncStorage.setItem('reduce_animations', 'true');
     }
   } catch (error) {
-    console.error('Erreur optimisation performance:', error);
+    logger.error('Erreur optimisation performance:', error);
   }
 };
 
@@ -163,7 +164,7 @@ export const checkAndroidPermissions = async () => {
     const { status } = await Notifications.getPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('Erreur vérification permissions:', error);
+    logger.error('Erreur vérification permissions:', error);
     return false;
   }
 };

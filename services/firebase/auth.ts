@@ -102,7 +102,7 @@ export const getCurrentUser = async (): Promise<UserInfo | null> => {
     }
     return null;
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'état d'authentification:", error);
+    logger.error("Erreur lors de la récupération de l'état d'authentification:", error);
     return null;
   }
 };
@@ -120,6 +120,6 @@ const saveAuthState = async (userInfo: UserInfo): Promise<void> => {
   try {
     await AsyncStorage.setItem(AUTH_STATE_KEY, JSON.stringify(userInfo));
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde de l'état d'authentification:", error);
+    logger.error("Erreur lors de la sauvegarde de l'état d'authentification:", error);
   }
 };

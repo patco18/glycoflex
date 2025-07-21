@@ -20,5 +20,5 @@ try {
   initializeApp(firebaseConfig);
   logger.log('Firebase pre-initialized successfully');
 } catch (error) {
-  console.error('Firebase pre-initialization error:', error);
+  logger.error('Firebase pre-initialization error:', error);
 }

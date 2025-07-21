@@ -8,6 +8,7 @@ import {
   checkAndroidPermissions,
 } from '@/utils/androidOptimizations';
 import { configureAndroidAccessibility } from '@/utils/accessibility';
+import logger from '@/utils/logger';
 
 interface AndroidState {
   isAndroid: boolean;
@@ -66,7 +67,7 @@ export const useAndroidOptimizations = () => {
 
       setIsReady(true);
     } catch (error) {
-      console.error('Erreur initialisation Android:', error);
+      logger.error('Erreur initialisation Android:', error);
       setIsReady(true);
     }
   }, []);
@@ -156,7 +157,7 @@ export const useAndroidOptimizations = () => {
       }));
       return hasPermission;
     } catch (error) {
-      console.error('Erreur demande permission:', error);
+      logger.error('Erreur demande permission:', error);
       return false;
     }
   }, []);

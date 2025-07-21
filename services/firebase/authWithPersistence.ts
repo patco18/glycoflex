@@ -34,7 +34,7 @@ export const configureFirebaseAuth = () => {
     });
     return auth;
   } catch (error) {
-    console.error("Failed to initialize Firebase Auth with persistence:", error);
+    logger.error("Failed to initialize Firebase Auth with persistence:", error);
     // En cas d'échec, revenir à l'authentification standard
     return getAuth(app);
   }

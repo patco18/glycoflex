@@ -8,6 +8,7 @@ import {
   getAndroidMaterialTheme,
   checkAndroidPermissions
 } from '@/utils/androidOptimizations';
+import logger from '@/utils/logger';
 
 // Import direct des notifications - si elles ne sont pas disponibles, gérer les cas d'erreur gracieusement
 import * as ExpoNotifications from 'expo-notifications';
@@ -144,7 +145,7 @@ export default function NotificationManager() {
 
       return () => subscription.remove();
     } catch (error) {
-      console.error('Erreur configuration notifications Android:', error);
+      logger.error('Erreur configuration notifications Android:', error);
     }
   };
 
@@ -156,7 +157,7 @@ export default function NotificationManager() {
         setSettings(prev => ({ ...prev, ...parsedSettings }));
       }
     } catch (error) {
-      console.error('Erreur lors du chargement des paramètres de notification:', error);
+      logger.error('Erreur lors du chargement des paramètres de notification:', error);
     }
   };
 
@@ -171,7 +172,7 @@ export default function NotificationManager() {
         showAndroidToast('Paramètres sauvegardés', 'SHORT');
       }
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des paramètres:', error);
+      logger.error('Erreur lors de la sauvegarde des paramètres:', error);
     }
   };
 
@@ -188,7 +189,7 @@ export default function NotificationManager() {
         setPermissionStatus('unavailable');
       }
     } catch (error) {
-      console.error('Erreur vérification permissions:', error);
+      logger.error('Erreur vérification permissions:', error);
       setPermissionStatus('denied');
     }
   };
@@ -234,7 +235,7 @@ export default function NotificationManager() {
         triggerAndroidHaptics('error');
       }
     } catch (error) {
-      console.error('Erreur demande permissions:', error);
+      logger.error('Erreur demande permissions:', error);
     }
   };
 
@@ -270,7 +271,7 @@ export default function NotificationManager() {
         triggerAndroidHaptics('success');
       }
     } catch (error) {
-      console.error('Erreur programmation notification:', error);
+      logger.error('Erreur programmation notification:', error);
     }
   };
 

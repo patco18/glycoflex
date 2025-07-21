@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/utils/logger';
 
 export type GlucoseUnit = 'mgdl' | 'mmoll';
 
@@ -60,7 +61,7 @@ export const saveGlucoseUnit = async (unit: GlucoseUnit) => {
   try {
     await AsyncStorage.setItem(UNIT_STORAGE_KEY, unit);
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde de l\'unité:', error);
+    logger.error('Erreur lors de la sauvegarde de l\'unité:', error);
   }
 };
 
@@ -70,7 +71,7 @@ export const loadGlucoseUnit = async (): Promise<GlucoseUnit> => {
     const savedUnit = await AsyncStorage.getItem(UNIT_STORAGE_KEY);
     return (savedUnit as GlucoseUnit) || 'mgdl';
   } catch (error) {
-    console.error('Erreur lors du chargement de l\'unité:', error);
+    logger.error('Erreur lors du chargement de l\'unité:', error);
     return 'mgdl';
   }
 };

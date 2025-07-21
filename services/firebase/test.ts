@@ -49,7 +49,7 @@ async function testFirebaseConnection() {
     
     logger.log("Firebase connection test completed");
   } catch (error: any) {
-    console.error("Firebase initialization error:", error.message || String(error));
+    logger.error("Firebase initialization error:", error.message || String(error));
   }
   
   logger.log("============================");

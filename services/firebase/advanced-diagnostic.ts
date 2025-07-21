@@ -87,7 +87,7 @@ export async function runFirebaseDiagnostic() {
   } catch (error) {
     const err = error as Error;
     diagnosticResults.errors.push(`General diagnostic error: ${err.message}`);
-    console.error('Firebase diagnostic error:', err);
+    logger.error('Firebase diagnostic error:', err);
   }
 
   logger.log('====== FIREBASE DIAGNOSTIC SUMMARY ======');

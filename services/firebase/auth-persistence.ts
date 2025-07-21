@@ -45,7 +45,7 @@ export class FirebaseAuthPersistence {
 
       logger.log('Firebase auth data saved to AsyncStorage');
     } catch (error) {
-      console.error('Error saving Firebase auth data:', error);
+      logger.error('Error saving Firebase auth data:', error);
     }
   }
 
@@ -74,7 +74,7 @@ export class FirebaseAuthPersistence {
       
       return true;
     } catch (error) {
-      console.error('Error restoring Firebase auth:', error);
+      logger.error('Error restoring Firebase auth:', error);
       return false;
     }
   }
@@ -91,7 +91,7 @@ export class FirebaseAuthPersistence {
       ]);
       logger.log('Firebase auth data cleared from AsyncStorage');
     } catch (error) {
-      console.error('Error clearing Firebase auth data:', error);
+      logger.error('Error clearing Firebase auth data:', error);
     }
   }
 

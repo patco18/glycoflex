@@ -17,7 +17,7 @@ export function verifyFirebaseSetup() {
     logger.log('Firebase Auth initialized:', !!auth);
     logger.log('Current user:', auth.currentUser ? 'Logged in' : 'Not logged in');
   } catch (error) {
-    console.error('Firebase Auth error:', error);
+    logger.error('Firebase Auth error:', error);
   }
   
   // Vérifier l'initialisation de Firestore
@@ -38,7 +38,7 @@ export function verifyFirebaseSetup() {
         }
       });
   } catch (error) {
-    console.error('Firestore error:', error);
+    logger.error('Firestore error:', error);
   }
   
   logger.log('==================================================');

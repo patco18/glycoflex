@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'react-native-localize';
+import logger from '@/utils/logger';
 
 const TIMEZONE_STORAGE_KEY = 'user_timezone';
 
@@ -13,7 +14,7 @@ export const saveUserTimezone = async (timezone: string) => {
   try {
     await AsyncStorage.setItem(TIMEZONE_STORAGE_KEY, timezone);
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde du fuseau horaire:', error);
+    logger.error('Erreur lors de la sauvegarde du fuseau horaire:', error);
   }
 };
 
@@ -23,7 +24,7 @@ export const loadUserTimezone = async (): Promise<string> => {
     const saved = await AsyncStorage.getItem(TIMEZONE_STORAGE_KEY);
     return saved || getSystemTimezone();
   } catch (error) {
-    console.error('Erreur lors du chargement du fuseau horaire:', error);
+    logger.error('Erreur lors du chargement du fuseau horaire:', error);
     return getSystemTimezone();
   }
 };

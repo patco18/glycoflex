@@ -9,6 +9,7 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AppProviders } from '@/contexts/AppProviders';
 import { setupFirebaseAuthPersistence } from '@/services/firebase/auth-handler';
 import { verifyFirebaseSetup } from '@/services/firebase/diagnostic';
+import logger from '@/utils/logger';
 import {
   setupAndroidNotificationChannels,
   optimizeAndroidPerformance,
@@ -24,13 +25,13 @@ export default function RootLayout() {
     try {
       verifyFirebaseSetup();
     } catch (error) {
-      console.error('Firebase verification failed:', error);
+      logger.error('Firebase verification failed:', error);
     }
     
     // Configuration de la persistence Firebase Auth
     setupFirebaseAuthPersistence()
       .then(restored => {
-        console.log('Firebase Auth persistence setup completed:', restored ? 'session restored' : 'no session to restore');
+        logger.log('Firebase Auth persistence setup completed:', restored ? 'session restored' : 'no session to restore');
       })
       .catch(error => {
         console.warn('Error setting up Firebase Auth persistence:', error);

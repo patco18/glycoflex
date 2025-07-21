@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccessibilityInfo, Platform } from 'react-native';
 import { showAndroidToast, triggerAndroidHaptics } from './androidOptimizations';
+import logger from '@/utils/logger';
 
 export interface AccessibilitySettings {
   highContrast: boolean;
@@ -36,7 +37,7 @@ export const loadAccessibilitySettings = async (): Promise<AccessibilitySettings
       reduceMotion: reduceMotionEnabled,
     };
   } catch (error) {
-    console.error('Erreur lors du chargement des paramètres d\'accessibilité:', error);
+    logger.error('Erreur lors du chargement des paramètres d\'accessibilité:', error);
     return {
       highContrast: false,
       largeText: false,
@@ -51,7 +52,7 @@ export const saveAccessibilitySettings = async (settings: AccessibilitySettings)
   try {
     await AsyncStorage.setItem(ACCESSIBILITY_STORAGE_KEY, JSON.stringify(settings));
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde des paramètres d\'accessibilité:', error);
+    logger.error('Erreur lors de la sauvegarde des paramètres d\'accessibilité:', error);
   }
 };
 
@@ -86,7 +87,7 @@ export const configureAndroidAccessibility = async () => {
 
     return subscription;
   } catch (error) {
-    console.error('Erreur configuration accessibilité Android:', error);
+    logger.error('Erreur configuration accessibilité Android:', error);
   }
 };
 

@@ -4,6 +4,7 @@
  */
 
 import { Platform } from 'react-native';
+import logger from '../utils/logger';
 
 /**
  * Enregistre un gestionnaire d'erreurs global pour attraper les erreurs non gérées
@@ -20,13 +21,13 @@ export function setupErrorHandlers() {
     global.ErrorUtils.setGlobalHandler((error: Error, isFatal: boolean) => {
       // Traitement personnalisé pour les erreurs Metro
       if (error?.message?.includes('ENOENT') && error?.message?.includes('<anonymous>')) {
-        console.log('=== METRO BUNDLER ERROR DETECTED ===');
-        console.log('This is likely an issue with the Metro bundler cache or symlinks.');
-        console.log('Try one of the following solutions:');
-        console.log('1. Clear Metro cache: npx react-native start --reset-cache');
-        console.log('2. Check for circular dependencies in your imports');
-        console.log('3. Check for invalid/duplicate imports or exports');
-        console.log('=== END OF METRO ERROR HELP ===');
+        logger.log('=== METRO BUNDLER ERROR DETECTED ===');
+        logger.log('This is likely an issue with the Metro bundler cache or symlinks.');
+        logger.log('Try one of the following solutions:');
+        logger.log('1. Clear Metro cache: npx react-native start --reset-cache');
+        logger.log('2. Check for circular dependencies in your imports');
+        logger.log('3. Check for invalid/duplicate imports or exports');
+        logger.log('=== END OF METRO ERROR HELP ===');
       }
       
       // Traitement personnalisé pour les erreurs Firebase
@@ -34,10 +35,10 @@ export function setupErrorHandlers() {
           error?.stack?.includes('firebase') || 
           // @ts-ignore - Les erreurs Firebase ont une propriété code non standard
           (error?.code && typeof error.code === 'string' && error.code.startsWith('auth/'))) {
-        console.log('=== FIREBASE ERROR DETECTED ===');
-        console.log('This could be related to authentication, Firestore, or initialization issues.');
-        console.log('Consider running the Firebase diagnostic tools in services/firebase/advanced-diagnostic.ts');
-        console.log('=== END OF FIREBASE ERROR HELP ===');
+        logger.log('=== FIREBASE ERROR DETECTED ===');
+        logger.log('This could be related to authentication, Firestore, or initialization issues.');
+        logger.log('Consider running the Firebase diagnostic tools in services/firebase/advanced-diagnostic.ts');
+        logger.log('=== END OF FIREBASE ERROR HELP ===');
       }
       
       // Passer l'erreur au gestionnaire d'origine
@@ -50,10 +51,10 @@ export function setupErrorHandlers() {
     const originalOnError = window.onerror;
     window.onerror = function(message, source, lineno, colno, error) {
       if (typeof message === 'string' && message.includes('<anonymous>')) {
-        console.log('=== WEB BUNDLER ERROR DETECTED ===');
-        console.log('This is likely an issue with the Metro/Webpack bundler cache.');
-        console.log('Try clearing your cache and restarting the bundler.');
-        console.log('=== END OF WEB ERROR HELP ===');
+        logger.log('=== WEB BUNDLER ERROR DETECTED ===');
+        logger.log('This is likely an issue with the Metro/Webpack bundler cache.');
+        logger.log('Try clearing your cache and restarting the bundler.');
+        logger.log('=== END OF WEB ERROR HELP ===');
       }
       
       // Appeler le gestionnaire d'erreur d'origine s'il existe
@@ -69,14 +70,14 @@ export function setupErrorHandlers() {
  * Nettoie le cache Metro et aide à résoudre les problèmes de bundling
  */
 export function fixMetroCacheIssues() {
-  console.log('To fix Metro cache issues:');
-  console.log('1. Stop the current bundler process');
-  console.log('2. Run: npx react-native start --reset-cache');
-  console.log('3. In a new terminal, run: npx react-native run-android (or run-ios)');
+  logger.log('To fix Metro cache issues:');
+  logger.log('1. Stop the current bundler process');
+  logger.log('2. Run: npx react-native start --reset-cache');
+  logger.log('3. In a new terminal, run: npx react-native run-android (or run-ios)');
   
   // Sur le web, nous pouvons essayer de recharger la page
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    console.log('Attempting to reload the page to clear cache...');
+    logger.log('Attempting to reload the page to clear cache...');
     setTimeout(() => {
       window.location.reload();
     }, 3000);

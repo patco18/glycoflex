@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import * as Database from "./database";
 import { getCurrentUser } from "./auth";
+import logger from "../../utils/logger";
 
 
 // Clés pour le stockage local
@@ -33,7 +34,7 @@ export const queueSyncOperation = async (
     // Sauvegarder la file d'attente mise à jour
     await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
   } catch (error) {
-    console.error("Erreur lors de l'ajout à la file d'attente de synchronisation:", error);
+    logger.error("Erreur lors de l'ajout à la file d'attente de synchronisation:", error);
   }
 };
 
@@ -83,7 +84,7 @@ export const processSyncQueue = async (): Promise<boolean> => {
             break;
         }
       } catch (error) {
-        console.error(`Erreur lors de la synchronisation de l'opération ${operation.type}:`, error);
+        logger.error(`Erreur lors de la synchronisation de l'opération ${operation.type}:`, error);
         failedOperations.push(operation);
       }
     }
@@ -100,7 +101,7 @@ export const processSyncQueue = async (): Promise<boolean> => {
     
     return failedOperations.length === 0;
   } catch (error) {
-    console.error("Erreur lors du traitement de la file d'attente de synchronisation:", error);
+    logger.error("Erreur lors du traitement de la file d'attente de synchronisation:", error);
     return false;
   }
 };
@@ -169,7 +170,7 @@ export const fullSync = async (): Promise<boolean> => {
     
     return true;
   } catch (error) {
-    console.error("Erreur lors de la synchronisation complète:", error);
+    logger.error("Erreur lors de la synchronisation complète:", error);
     return false;
   }
 };
@@ -185,7 +186,7 @@ export const getLastSyncDate = async (): Promise<Date | null> => {
     }
     return null;
   } catch (error) {
-    console.error("Erreur lors de la récupération de la date de dernière synchronisation:", error);
+    logger.error("Erreur lors de la récupération de la date de dernière synchronisation:", error);
     return null;
   }
 };
