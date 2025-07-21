@@ -11,6 +11,7 @@ import {
 } from "firebase/auth";
 import { auth } from "./config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import logger from "../../utils/logger";
 
 // Clé pour stocker l'état de connexion dans AsyncStorage
 const AUTH_STATE_KEY = "glucose_app_auth_state";
@@ -29,7 +30,7 @@ export const signUpWithEmail = async (email: string, password: string): Promise<
   try {
     await setPersistence(auth, browserLocalPersistence);
   } catch (error) {
-    console.log('setPersistence not supported in this environment:', error);
+    logger.log('setPersistence not supported in this environment:', error);
   }
   
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -47,7 +48,7 @@ export const signInWithEmail = async (email: string, password: string): Promise<
   try {
     await setPersistence(auth, browserLocalPersistence);
   } catch (error) {
-    console.log('setPersistence not supported in this environment:', error);
+    logger.log('setPersistence not supported in this environment:', error);
   }
   
   const userCredential = await signInWithEmailAndPassword(auth, email, password);

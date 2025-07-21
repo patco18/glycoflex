@@ -3,6 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, initializeAuth, browserLocalPersistence } from 'firebase/auth';
 // Remove problematic import
 import firebaseConfig from '../../config/app';
+import logger from '../../utils/logger';
 
 /**
  * Configure l'authentification Firebase avec persistence pour React Native
@@ -14,7 +15,7 @@ export const configureFirebaseAuth = () => {
   try {
     app = initializeApp(firebaseConfig.firebase);
   } catch (error) {
-    console.warn("Firebase already initialized, using existing instance");
+    logger.warn("Firebase already initialized, using existing instance");
     // L'application est déjà initialisée, probablement dans config.ts
     return;
   }

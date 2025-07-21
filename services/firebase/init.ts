@@ -4,6 +4,7 @@
  */
 
 import { initializeApp } from "firebase/app";
+import logger from '../../utils/logger';
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -15,9 +16,9 @@ const firebaseConfig = {
 };
 
 try {
-  console.log('Initializing Firebase...');
+  logger.log('Initializing Firebase...');
   initializeApp(firebaseConfig);
-  console.log('Firebase pre-initialized successfully');
+  logger.log('Firebase pre-initialized successfully');
 } catch (error) {
   console.error('Firebase pre-initialization error:', error);
 }
