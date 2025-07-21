@@ -33,3 +33,10 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# temporary/test files
+temp_layout.tsx
+temp-tsconfig.json
+components/TestIcons.tsx
+test-firebase.js
+services/firebase/test.ts

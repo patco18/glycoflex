@@ -72,6 +72,13 @@ types/               # Définitions de types TypeScript
 utils/               # Fonctions utilitaires
 ```
 
+## 🧹 Fichiers temporaires
+
+Certains fichiers utilisés pour des tests internes ont été retirés du dépôt
+(`temp_layout.tsx`, `temp-tsconfig.json`, `components/TestIcons.tsx`,
+`test-firebase.js` et `services/firebase/test.ts`). Ils sont désormais listés
+dans `.gitignore` afin de garder l'historique propre.
+
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou à soumettre une pull request.
