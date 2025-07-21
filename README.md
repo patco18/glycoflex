@@ -78,4 +78,4 @@ Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou à
 
 ## 📄 Licence
 
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus d'informations.
+Ce projet est sous licence MIT (c) 2024 patco18. Voir le fichier `LICENSE` pour plus d'informations.
