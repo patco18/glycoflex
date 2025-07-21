@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
-import { GlucoseMeasurement } from '@/utils/storage';
+import { GlucoseMeasurement } from '@/types/glucose';
 import { getGlucoseStatus } from '@/utils/glucose';
 import { TrendingUp, ChartBar as BarChart3, ChartPie as PieChartIcon } from 'lucide-react-native';
 

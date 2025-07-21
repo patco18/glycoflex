@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import LinearGradient from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, TriangleAlert as AlertTriangle, Target } from 'lucide-react-native';
-import { GlucoseMeasurement } from '@/utils/storage';
+import { GlucoseMeasurement } from '@/types/glucose';
 import { getGlucoseStatus } from '@/utils/glucose';
 
 interface PredictiveAnalysisProps {

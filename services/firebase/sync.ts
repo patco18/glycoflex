@@ -2,8 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import * as Database from "./database";
 import { getCurrentUser } from "./auth";
-import { GlucoseMeasurement } from "../../types/glucose.d";
-import logger from "../../utils/logger";
+
 
 // Clés pour le stockage local
 const SYNC_QUEUE_KEY = "glucose_app_sync_queue";
