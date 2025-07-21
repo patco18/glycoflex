@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, Share } from 'react-native';
 import { FileText, Download, Share2 } from 'lucide-react-native';
-import { GlucoseMeasurement } from '@/utils/storage';
+import { GlucoseMeasurement } from '@/types/glucose';
 import { calculateStats, getGlucoseStatus } from '@/utils/glucose';
 
 interface PDFExportProps {

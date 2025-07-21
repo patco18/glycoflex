@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'expo-linear-gradient';
 import { Calendar, Filter, TrendingUp, Trash2 } from 'lucide-react-native';
-import { getStoredMeasurements, removeMeasurement, GlucoseMeasurement } from '@/utils/storage';
+import { getStoredMeasurements, removeMeasurement } from '@/utils/storage';
+import { GlucoseMeasurement } from '@/types/glucose';
 import { getGlucoseStatus } from '@/utils/glucose';
 import AdvancedChart from '@/components/AdvancedChart';
 

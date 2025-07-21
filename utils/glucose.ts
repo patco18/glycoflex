@@ -1,4 +1,4 @@
-import { GlucoseMeasurement } from './storage';
+import { GlucoseMeasurement } from '@/types/glucose';
 
 export type GlucoseStatus = 'low' | 'normal' | 'high';
 

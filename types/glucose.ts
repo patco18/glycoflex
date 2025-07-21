@@ -2,11 +2,19 @@
  * Interface pour les mesures de glucose
  */
 export interface GlucoseMeasurement {
+  /** Identifiant unique */
   id?: string;
+  /** Valeur mesurée */
   value: number;
-  date: string; // ISO String
-  unit: string;
+  /** Timestamp UNIX en millisecondes */
+  timestamp: number;
+  /** Type ou contexte de mesure (à jeun, avant repas, etc.) */
+  type?: string;
+  /** Notes optionnelles de l'utilisateur */
   notes?: string;
+  /** Unité de mesure (optionnelle, ex : mg/dL) */
+  unit?: string;
+  /** Contexte de repas optionnel */
   mealContext?: string;
 }
 
