@@ -4,6 +4,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from './config';
+import logger from '../../utils/logger';
 
 // Clés pour le stockage
 const AUTH_USER_KEY = 'firebase_auth_user';
@@ -38,7 +39,7 @@ const setupAuthListener = async () => {
         
         await AsyncStorage.setItem(AUTH_USER_KEY, userData);
         await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
-        console.log('Firebase Auth data saved to AsyncStorage');
+        logger.log('Firebase Auth data saved to AsyncStorage');
       } catch (error) {
         console.error('Error saving auth data to AsyncStorage:', error);
       }
@@ -47,7 +48,7 @@ const setupAuthListener = async () => {
       try {
         await AsyncStorage.removeItem(AUTH_USER_KEY);
         await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
-        console.log('Firebase Auth data cleared from AsyncStorage');
+        logger.log('Firebase Auth data cleared from AsyncStorage');
       } catch (error) {
         console.error('Error clearing auth data from AsyncStorage:', error);
       }

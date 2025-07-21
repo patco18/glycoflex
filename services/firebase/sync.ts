@@ -3,6 +3,7 @@ import NetInfo from "@react-native-community/netinfo";
 import * as Database from "./database";
 import { getCurrentUser } from "./auth";
 import { GlucoseMeasurement } from "../../types/glucose.d";
+import logger from "../../utils/logger";
 
 // Clés pour le stockage local
 const SYNC_QUEUE_KEY = "glucose_app_sync_queue";
@@ -44,13 +45,13 @@ export const processSyncQueue = async (): Promise<boolean> => {
   const netInfoState = await NetInfo.fetch();
   
   if (!netInfoState.isConnected) {
-    console.log("Pas de connexion internet, synchronisation reportée");
+    logger.log("Pas de connexion internet, synchronisation reportée");
     return false;
   }
   
   const user = await getCurrentUser();
   if (!user) {
-    console.log("Utilisateur non connecté, synchronisation reportée");
+    logger.log("Utilisateur non connecté, synchronisation reportée");
     return false;
   }
   
@@ -112,13 +113,13 @@ export const fullSync = async (): Promise<boolean> => {
   const netInfoState = await NetInfo.fetch();
   
   if (!netInfoState.isConnected) {
-    console.log("Pas de connexion internet, synchronisation complète reportée");
+    logger.log("Pas de connexion internet, synchronisation complète reportée");
     return false;
   }
   
   const user = await getCurrentUser();
   if (!user) {
-    console.log("Utilisateur non connecté, synchronisation complète reportée");
+    logger.log("Utilisateur non connecté, synchronisation complète reportée");
     return false;
   }
   

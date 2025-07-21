@@ -5,6 +5,7 @@ import { getAuth, setPersistence, browserLocalPersistence, inMemoryPersistence }
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import logger from "../../utils/logger";
 
 // Configuration Firebase
 // Données de configuration Firebase pour votre application
@@ -21,10 +22,10 @@ const firebaseConfig = {
 let app;
 try {
   if (getApps().length === 0) {
-    console.log('Initializing Firebase for the first time in config.ts');
+    logger.log('Initializing Firebase for the first time in config.ts');
     app = initializeApp(firebaseConfig);
   } else {
-    console.log('Using existing Firebase app in config.ts');
+    logger.log('Using existing Firebase app in config.ts');
     app = getApp();
   }
 } catch (error) {
@@ -32,7 +33,7 @@ try {
   // En cas d'erreur, essayer encore une fois d'initialiser
   try {
     app = initializeApp(firebaseConfig);
-    console.log('Second attempt to initialize Firebase successful');
+    logger.log('Second attempt to initialize Firebase successful');
   } catch (innerError) {
     console.error('Second attempt at Firebase initialization failed:', innerError);
     throw new Error('Firebase initialization failed completely. Check network and credentials.');
@@ -47,20 +48,20 @@ try {
   // Sur le web, on peut utiliser la persistence locale du navigateur
   if (Platform.OS === 'web') {
     setPersistence(auth, browserLocalPersistence)
-      .then(() => console.log('Firebase Auth initialized with browser persistence'))
+      .then(() => logger.log('Firebase Auth initialized with browser persistence'))
       .catch(error => console.error('Error setting auth persistence:', error));
   } else {
     // Sur mobile, nous utilisons notre propre mécanisme de persistance via AsyncStorage
     // car la persistence native n'est pas bien supportée dans Firebase v12
     setPersistence(auth, inMemoryPersistence)
-      .then(() => console.log('Firebase Auth initialized with in-memory persistence (custom persistence via AsyncStorage will be used)'))
+      .then(() => logger.log('Firebase Auth initialized with in-memory persistence (custom persistence via AsyncStorage will be used)'))
       .catch(error => console.error('Error setting auth persistence:', error));
   }
 } catch (error) {
   console.error('Error configuring auth persistence:', error);
 }
 
-console.log('Firebase Auth initialized. Using custom persistence with AsyncStorage from auth-persistence.ts');
+logger.log('Firebase Auth initialized. Using custom persistence with AsyncStorage from auth-persistence.ts');
 
 // Initialisation de Firestore et Storage
 const db = getFirestore(app);

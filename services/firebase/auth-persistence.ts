@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from './config';
 import { User } from 'firebase/auth';
+import logger from '../../utils/logger';
 
 // Clés pour stocker les informations Firebase Auth
 const FIREBASE_AUTH_TOKEN_KEY = 'firebase_auth_token';
@@ -42,7 +43,7 @@ export class FirebaseAuthPersistence {
         AsyncStorage.setItem(FIREBASE_REFRESH_TOKEN_KEY, user.refreshToken)
       ]);
 
-      console.log('Firebase auth data saved to AsyncStorage');
+      logger.log('Firebase auth data saved to AsyncStorage');
     } catch (error) {
       console.error('Error saving Firebase auth data:', error);
     }
@@ -56,20 +57,20 @@ export class FirebaseAuthPersistence {
     try {
       // Si Firebase est déjà authentifié, ne rien faire
       if (auth.currentUser) {
-        console.log('User already authenticated, no need to restore');
+        logger.log('User already authenticated, no need to restore');
         return true;
       }
       
       const token = await AsyncStorage.getItem(FIREBASE_AUTH_TOKEN_KEY);
       
       if (!token) {
-        console.log('No saved Firebase auth token found');
+        logger.log('No saved Firebase auth token found');
         return false;
       }
 
       // Pour Firebase 12, la persistence automatique est gérée par la SDK
       // Cette fonction est désormais plus pour la compatibilité et le logging
-      console.log('Auth state is being handled by Firebase SDK with AsyncStorage');
+      logger.log('Auth state is being handled by Firebase SDK with AsyncStorage');
       
       return true;
     } catch (error) {
@@ -88,7 +89,7 @@ export class FirebaseAuthPersistence {
         AsyncStorage.removeItem(FIREBASE_AUTH_USER_KEY),
         AsyncStorage.removeItem(FIREBASE_REFRESH_TOKEN_KEY)
       ]);
-      console.log('Firebase auth data cleared from AsyncStorage');
+      logger.log('Firebase auth data cleared from AsyncStorage');
     } catch (error) {
       console.error('Error clearing Firebase auth data:', error);
     }
@@ -132,14 +133,14 @@ export const firebaseAuthPersistence = new FirebaseAuthPersistence();
  * Appelez cette fonction au démarrage de l'application
  */
 export function setupFirebaseAuthPersistence() {
-  console.log('Initializing Firebase Auth persistence from auth-persistence.ts');
+  logger.log('Initializing Firebase Auth persistence from auth-persistence.ts');
   // Configurer les listeners d'authentification
   const cleanupListeners = firebaseAuthPersistence.setupAuthChangeListeners();
   
   // Tenter de restaurer l'authentification si elle existe
   return firebaseAuthPersistence.restoreAuth()
     .then(result => {
-      console.log('Firebase Auth persistence initialized with AsyncStorage');
+      logger.log('Firebase Auth persistence initialized with AsyncStorage');
       return result;
     });
 }
