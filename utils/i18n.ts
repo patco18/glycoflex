@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { Platform } from 'react-native';
+import logger from './logger';
 
 import en from '../locales/en.json';
 import fr from '../locales/fr.json';
@@ -18,7 +19,7 @@ const getDeviceLanguage = () => {
       }
     }
   } catch (error) {
-    console.warn('react-native-localize not available, using default language');
+    logger.warn('react-native-localize not available, using default language');
   }
   return 'en';
 };

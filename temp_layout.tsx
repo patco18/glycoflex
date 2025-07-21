@@ -31,7 +31,7 @@ export default function RootLayout() {
         logger.log('Firebase Auth persistence setup completed:', restored ? 'session restored' : 'no session to restore');
       })
       .catch(error => {
-        console.warn('Error setting up Firebase Auth persistence:', error);
+        logger.warn('Error setting up Firebase Auth persistence:', error);
       });
       
     // Configuration spécifique Android

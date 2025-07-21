@@ -18,7 +18,7 @@ const Notifications = ExpoNotifications && typeof ExpoNotifications === 'object'
 
 // Afficher un avertissement si les notifications ne sont pas disponibles
 if (!Notifications) {
-  console.warn('Expo-notifications n\'est pas disponible sur cette plateforme.');
+  logger.warn("Expo-notifications n'est pas disponible sur cette plateforme.");
 }
 
 // Configuration des notifications avec canaux Android si disponible
@@ -41,10 +41,10 @@ if (Notifications) {
         },
       });
     } else {
-      console.warn('Notifications.setNotificationHandler is not a function');
+      logger.warn('Notifications.setNotificationHandler is not a function');
     }
   } catch (error) {
-    console.warn('Error configuring notification handler:', error);
+    logger.warn('Error configuring notification handler:', error);
   }
 }
 
@@ -72,7 +72,7 @@ export const sendGlucoseAlert = async (value: number, type: 'low' | 'high') => {
       });
     } else {
       // Fallback si les notifications ne sont pas disponibles
-      console.warn(`Alert glycémie ${type}: ${value} mg/dL`);
+      logger.warn(`Alert glycémie ${type}: ${value} mg/dL`);
       if (Platform.OS === 'android') {
         showAndroidToast(type === 'low' 
           ? `Glycémie basse: ${value} mg/dL` 
@@ -80,7 +80,7 @@ export const sendGlucoseAlert = async (value: number, type: 'low' | 'high') => {
       }
     }
   } catch (error) {
-    console.warn('Failed to send glucose alert notification', error);
+    logger.warn('Failed to send glucose alert notification', error);
   }
 };
 
@@ -125,7 +125,7 @@ export default function NotificationManager() {
       // Configuration des canaux Android déjà définis dans androidOptimizations.ts
       // Ajout d'un listener pour les interactions avec les notifications
       if (!Notifications) {
-        console.warn('Notifications not available for setting up Android behavior');
+        logger.warn('Notifications not available for setting up Android behavior');
         return () => {}; // Retourner une fonction de nettoyage vide
       }
 
@@ -202,7 +202,7 @@ export default function NotificationManager() {
 
       // Vérifiez si Notifications est disponible
       if (!Notifications) {
-        console.warn('Notifications not available for requesting permissions');
+        logger.warn('Notifications not available for requesting permissions');
         setPermissionStatus('unavailable');
         if (Platform.OS === 'android') {
           showAndroidToast('Notifications non disponibles', 'LONG');
@@ -242,7 +242,7 @@ export default function NotificationManager() {
   const scheduleNotification = async (title: string, body: string, channelId: string = 'glucose-reminders') => {
     try {
       if (!Notifications) {
-        console.warn('Notifications not available for scheduling');
+        logger.warn('Notifications not available for scheduling');
         if (Platform.OS === 'android') {
           showAndroidToast('Notifications non disponibles', 'SHORT');
         }
@@ -286,7 +286,7 @@ export default function NotificationManager() {
     }
 
     if (!Notifications) {
-      console.warn('Notifications not available for urgent alerts');
+      logger.warn('Notifications not available for urgent alerts');
       return;
     }
 
@@ -315,7 +315,7 @@ export default function NotificationManager() {
 
   // Si les notifications ne sont pas disponibles, renvoyer null pour ne pas afficher le composant
   if (!Notifications) {
-    console.warn('Notifications not available, NotificationManager will not render');
+    logger.warn('Notifications not available, NotificationManager will not render');
     return null;
   }
 

@@ -58,7 +58,7 @@ export const triggerAndroidHaptics = async (type: 'light' | 'medium' | 'heavy' |
         break;
     }
   } catch (error) {
-    console.warn('Erreur feedback haptique:', error);
+    logger.warn('Erreur feedback haptique:', error);
   }
 };
 
