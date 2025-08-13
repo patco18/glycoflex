@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { GlucoseMeasurement } from '@/utils/storage';
-import { getGlucoseStatus } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useTheme } from '@/theme';
 
 interface GlucoseChartProps {
   measurements: GlucoseMeasurement[];
@@ -12,6 +12,8 @@ interface GlucoseChartProps {
 
 export default function GlucoseChart({ measurements, period }: GlucoseChartProps) {
   const { userSettings } = useSettings();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = screenWidth - 32;
   
@@ -59,7 +61,7 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
       labels,
       datasets: [{
         data,
-        color: (opacity = 1) => `rgba(102, 126, 234, ${opacity})`,
+        color: (opacity = 1) => hexToRgba(colors.primary, opacity),
         strokeWidth: 3
       }]
     };
@@ -67,22 +69,22 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
 
   const chartConfig = {
     backgroundColor: 'transparent',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
+    backgroundGradientFrom: colors.background,
+    backgroundGradientTo: colors.background,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(102, 126, 234, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+    color: (opacity = 1) => hexToRgba(colors.primary, opacity),
+    labelColor: (opacity = 1) => hexToRgba(colors.muted, opacity),
     style: {
       borderRadius: 16,
     },
     propsForDots: {
       r: '6',
       strokeWidth: '2',
-      stroke: '#667EEA'
+      stroke: colors.primary
     },
     propsForBackgroundLines: {
       strokeDasharray: '',
-      stroke: '#E5E7EB',
+      stroke: colors.border,
       strokeWidth: 1
     }
   };
@@ -114,15 +116,15 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
           
           <View style={styles.legendContainer}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#FF3B82' }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.danger }]} />
               <Text style={styles.legendText}>Bas (&lt;{targetMin})</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#00D9FF' }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.secondary }]} />
               <Text style={styles.legendText}>Normal ({targetMin}-{targetMax})</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#FF6B35' }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
               <Text style={styles.legendText}>Élevé (&gt;{targetMax})</Text>
             </View>
           </View>
@@ -138,58 +140,66 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  chartContainer: {
-    alignItems: 'center',
-  },
-  chart: {
-    borderRadius: 16,
-  },
-  legendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 16,
-    paddingHorizontal: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 4,
-  },
-  legendText: {
-    fontSize: 10,
-    color: '#6B7280',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-  },
-});
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    chartContainer: {
+      alignItems: 'center',
+    },
+    chart: {
+      borderRadius: 16,
+    },
+    legendContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: 16,
+      paddingHorizontal: 8,
+    },
+    legendItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    legendDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 4,
+    },
+    legendText: {
+      fontSize: 10,
+      color: colors.muted,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 40,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.placeholder,
+      textAlign: 'center',
+    },
+  });
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
