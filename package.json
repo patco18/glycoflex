@@ -7,7 +7,8 @@
     "dev": "EXPO_NO_TELEMETRY=1 expo start",
     "build:web": "expo export --platform web",
     "lint": "expo lint",
-    "test": "TS_NODE_COMPILER_OPTIONS=\"{\\\"module\\\":\\\"commonjs\\\"}\" node --test tests/simpleCrypto.test.js"
+    "test": "TS_NODE_COMPILER_OPTIONS=\"{\\\"module\\\":\\\"commonjs\\\"}\" node --test tests/simpleCrypto.test.js",
+    "i18n:check": "node scripts/i18n-check.js"
   },
   "dependencies": {
     "@expo/config-plugins": "~10.1.1",
