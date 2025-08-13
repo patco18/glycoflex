@@ -4,13 +4,15 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { getFirestore, writeBatch, doc, getDocs, collection } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useToast } from '@/hooks/useToast';
 
 const EmergencyCleanup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState('');
+  const toast = useToast();
 
   const db = getFirestore();
 
@@ -45,26 +47,26 @@ const EmergencyCleanup = () => {
       // Nettoyer le cache local
       await cleanLocalCache();
       
-      Alert.alert('Succès', `${deletedCount} documents corrompus supprimés. Redémarrez l'app.`);
+      toast.show('Succès', `${deletedCount} documents corrompus supprimés. Redémarrez l'app.`);
       
     } catch (error) {
       console.error('❌ Erreur nettoyage:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       setStatus(`❌ Erreur: ${errorMessage}`);
-      Alert.alert('Erreur', `Échec du nettoyage: ${errorMessage}`);
+      toast.show('Erreur', `Échec du nettoyage: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   const nukeAllDocuments = async () => {
-    Alert.alert(
+    toast.show(
       '⚠️ ATTENTION',
       'Supprimer TOUS les documents? Cette action est irréversible!',
       [
         { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'SUPPRIMER TOUT', 
+        {
+          text: 'SUPPRIMER TOUT',
           style: 'destructive',
           onPress: async () => {
             setIsLoading(true);
@@ -83,13 +85,13 @@ const EmergencyCleanup = () => {
               
               await cleanLocalCache();
               
-              Alert.alert('Terminé', `${snapshot.docs.length} documents supprimés. Redémarrez l'app.`);
+              toast.show('Terminé', `${snapshot.docs.length} documents supprimés. Redémarrez l'app.`);
               
             } catch (error) {
               console.error('❌ Erreur suppression totale:', error);
               const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
               setStatus(`❌ Erreur: ${errorMessage}`);
-              Alert.alert('Erreur', `Échec: ${errorMessage}`);
+              toast.show('Erreur', `Échec: ${errorMessage}`);
             } finally {
               setIsLoading(false);
             }

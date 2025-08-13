@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert, AccessibilityInfo } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GlucoseUnit, convertGlucose } from '@/utils/units';
 import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut, User, Database } from 'lucide-react-native';
 import EmergencyCleanup from '@/components/EmergencyCleanup';
+import { useToast } from '@/hooks/useToast';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -22,6 +23,7 @@ export default function SettingsScreen() {
   const [largeText, setLargeText] = useState(accessibilitySettings.largeText || false);
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(accessibilitySettings.screenReaderEnabled || false);
   const [cloudBackup, setCloudBackup] = useState(false);
+  const toast = useToast();
 
   // Vérifier si la sauvegarde cloud est activée
   useEffect(() => {
@@ -77,13 +79,13 @@ export default function SettingsScreen() {
       // Déconnexion
       try {
         await logout();
-        Alert.alert(
+        toast.show(
           t('settings.logout_success'),
           t('settings.logout_success_message')
         );
       } catch (error) {
         console.error('Erreur lors de la déconnexion:', error);
-        Alert.alert(
+        toast.show(
           t('settings.error'),
           t('settings.logout_error')
         );
@@ -125,7 +127,7 @@ export default function SettingsScreen() {
       setCloudBackup(value);
       
       if (value && !user) {
-        Alert.alert(
+        toast.show(
           t('settings.cloud_backup'),
           t('settings.login_required'),
           [
@@ -142,7 +144,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Erreur lors de la modification de la sauvegarde cloud:', error);
-      Alert.alert(
+      toast.show(
         t('settings.error'),
         t('settings.cloud_backup_error')
       );
@@ -152,15 +154,15 @@ export default function SettingsScreen() {
   // Pour ces fonctions de navigation, utilisons simplement des alertes 
   // car les écrans ne sont pas implémentés dans la structure d'app actuelle
   const navigateToProfile = () => {
-    Alert.alert(t('settings.profile'), t('common.feature_coming_soon'));
+    toast.show(t('settings.profile'), t('common.feature_coming_soon'));
   };
 
   const navigateToTargets = () => {
-    Alert.alert(t('settings.targets'), t('common.feature_coming_soon'));
+    toast.show(t('settings.targets'), t('common.feature_coming_soon'));
   };
 
   const navigateToNotifications = () => {
-    Alert.alert(t('settings.notifications'), t('common.feature_coming_soon'));
+    toast.show(t('settings.notifications'), t('common.feature_coming_soon'));
   };
   
   const navigateToSyncSettings = () => {

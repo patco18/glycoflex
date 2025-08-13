@@ -1,7 +1,7 @@
 import { doc, getDoc, setDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
 import { EncryptionService } from './secureCloudStorage';
-import { Alert } from 'react-native';
+import { showToast } from '@/hooks/useToast';
 
 /**
  * Utilitaire avancé pour corriger ou récupérer des documents corrompus
@@ -210,7 +210,7 @@ export class DocumentRecoveryTools {
     message: string,
     onConfirm: () => void
   ): void {
-    Alert.alert(
+    showToast(
       title,
       message,
       [
@@ -223,8 +223,7 @@ export class DocumentRecoveryTools {
           onPress: onConfirm,
           style: 'destructive',
         },
-      ],
-      { cancelable: true }
+      ]
     );
   }
 }

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, TriangleAlert as AlertTriangle, Activity, Sparkles, ChartBar as BarChart3 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { StorageManager } from '@/utils/storageManager';
-import { GlucoseMeasurement } from '@/utils/storage';
-import { getGlucoseStatus, calculateStats, filterMeasurementsByDateRange } from '@/utils/glucose';
+import { getGlucoseStatus, calculateStats } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useHighContrast, useLargeText, getHighContrastStyles, getLargeTextStyles } from '@/utils/accessibility';
 import AdvancedChart from '@/components/AdvancedChart';
@@ -14,36 +12,23 @@ import PredictiveAnalysis from '@/components/PredictiveAnalysis';
 import ComparisonAnalysis from '@/components/ComparisonAnalysis';
 import PDFExport from '@/components/PDFExport';
 import StatsCards from '@/components/StatsCards';
+import { useMeasurements } from '@/hooks/useMeasurements';
+
 
 function HomeScreen() {
   const { t } = useTranslation();
   const { userSettings } = useSettings();
-  const highContrast = useHighContrast();
-  const largeText = useLargeText();
-  const [measurements, setMeasurements] = useState<GlucoseMeasurement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
+  const toast = useToast();
 
   useEffect(() => {
-    loadMeasurements();
-  }, []);
 
-  const loadMeasurements = async () => {
-    try {
-      const data = await StorageManager.getMeasurements();
-      setMeasurements(data);
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les mesures');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
-  };
+  }, [error]);
 
   const onRefresh = () => {
-    setRefreshing(true);
-    loadMeasurements();
+    refetch();
   };
 
   const calculateTimeInRange = () => {
@@ -84,22 +69,22 @@ function HomeScreen() {
     if (!latestMeasurement || !previousMeasurement) return null;
     
     const diff = latestMeasurement.value - previousMeasurement.value;
-    if (diff > 0) return <TrendingUp size={20} color="#FF6B35" />;
-    if (diff < 0) return <TrendingDown size={20} color="#00D9FF" />;
-    return <Activity size={20} color="#8B5CF6" />;
+    if (diff > 0) return <TrendingUp size={20} color={colors.warning} />;
+    if (diff < 0) return <TrendingDown size={20} color={colors.secondary} />;
+    return <Activity size={20} color={colors.accent} />;
   };
 
   const getStatusColor = (value: number) => {
     const status = getGlucoseStatus(value);
     switch (status) {
-      case 'low': return '#FF3B82';
-      case 'high': return '#FF6B35';
-      case 'normal': return '#00D9FF';
-      default: return '#8B5CF6';
+      case 'low': return colors.danger;
+      case 'high': return colors.warning;
+      case 'normal': return colors.secondary;
+      default: return colors.accent;
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, getHighContrastStyles(highContrast)]}>
         <View style={styles.loadingContainer}>
@@ -120,19 +105,19 @@ function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, getHighContrastStyles(highContrast)]}>
       <LinearGradient
-        colors={highContrast ? ['#000000', '#000000', '#000000'] : ['#667EEA', '#764BA2', '#F093FB']}
+
         style={styles.gradient}
       >
-        <ScrollView 
-          style={styles.scrollView} 
+        <ScrollView
+          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={isFetching} onRefresh={onRefresh} />
           }
         >
           <View style={styles.header}>
             <View style={styles.headerIcon}>
-              <Sparkles size={32} color="#FFFFFF" />
+              <Sparkles size={32} color={colors.white} />
             </View>
             <Text
               style={[
@@ -169,13 +154,7 @@ function HomeScreen() {
                 {getTrendIcon()}
               </View>
               <View style={styles.currentValueContainer}>
-                <Text
-                  style={[
-                    styles.currentValue,
-                    getLargeTextStyles(largeText, 48),
-                    { color: getStatusColor(latestMeasurement.value) },
-                  ]}
-                >
+
                   {latestMeasurement.value}
                 </Text>
                 <Text
@@ -210,10 +189,10 @@ function HomeScreen() {
           ) : (
             <View style={[styles.emptyCard, getHighContrastStyles(highContrast)]}>
               <LinearGradient
-                colors={highContrast ? ['#000000', '#000000'] : ['#FF9A9E', '#FECFEF']}
+
                 style={styles.emptyIconContainer}
               >
-                <AlertTriangle size={48} color="#FFFFFF" />
+                <AlertTriangle size={48} color={colors.white} />
               </LinearGradient>
               <Text
                 style={[
@@ -245,16 +224,7 @@ function HomeScreen() {
           <View style={styles.chartSection}>
             <View style={styles.chartHeader}>
               <View style={styles.chartTitleContainer}>
-                <BarChart3 size={20} color="#FFFFFF" />
-                <Text
-                  style={[
-                    styles.chartTitle,
-                    getHighContrastStyles(highContrast),
-                    getLargeTextStyles(largeText, 18),
-                  ]}
-                >
-                  {t('home.chart')}
-                </Text>
+
               </View>
               <View style={[styles.periodSelector, getHighContrastStyles(highContrast)]}>
                 <TouchableOpacity
@@ -312,13 +282,7 @@ function HomeScreen() {
             {measurements.slice(0, 5).map((measurement, index) => (
               <View key={measurement.id} style={styles.recentItem}>
                 <View style={styles.recentLeft}>
-                  <Text
-                    style={[
-                      styles.recentValue,
-                      getLargeTextStyles(largeText, 16),
-                      { color: getStatusColor(measurement.value) },
-                    ]}
-                  >
+
                     {measurement.value} mg/dL
                   </Text>
                   <Text
@@ -352,206 +316,207 @@ function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#667EEA',
-  },
-  gradient: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 18,
-    color: '#6B7280',
-  },
-  header: {
-    paddingTop: 16,
-    paddingBottom: 24,
-    alignItems: 'center',
-  },
-  headerIcon: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#E0E7FF',
-    textAlign: 'center',
-  },
-  currentCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  currentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  currentLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  currentValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 8,
-  },
-  currentValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    marginRight: 8,
-  },
-  currentUnit: {
-    fontSize: 18,
-    color: '#6B7280',
-  },
-  currentTime: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  currentType: {
-    fontSize: 14,
-    color: '#2563EB',
-    fontWeight: '500',
-  },
-  emptyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#718096',
-    textAlign: 'center',
-  },
-  chartSection: {
-    marginBottom: 16,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  chartTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 8,
-  },
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
-    padding: 2,
-  },
-  periodButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  periodButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  },
-  periodText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  periodTextActive: {
-    color: '#667EEA',
-  },
-  recentContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  recentTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 16,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-  },
-  recentLeft: {
-    flex: 1,
-  },
-  recentValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  recentType: {
-    fontSize: 12,
-    color: '#718096',
-  },
-  recentTime: {
-    fontSize: 14,
-    color: '#718096',
-  },
-});
+const createStyles = (colors: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.primary,
+    },
+    gradient: {
+      flex: 1,
+    },
+    scrollView: {
+      flex: 1,
+      paddingHorizontal: 16,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 18,
+      color: colors.muted,
+    },
+    header: {
+      paddingTop: 16,
+      paddingBottom: 24,
+      alignItems: 'center',
+    },
+    headerIcon: {
+      marginBottom: 12,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: colors.white,
+      marginBottom: 4,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 16,
+      color: colors.subtitle,
+      textAlign: 'center',
+    },
+    currentCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    currentHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    currentLabel: {
+      fontSize: 14,
+      color: colors.muted,
+      fontWeight: '500',
+    },
+    currentValueContainer: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      marginBottom: 8,
+    },
+    currentValue: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      marginRight: 8,
+    },
+    currentUnit: {
+      fontSize: 18,
+      color: colors.muted,
+    },
+    currentTime: {
+      fontSize: 14,
+      color: colors.muted,
+      marginBottom: 4,
+    },
+    currentType: {
+      fontSize: 14,
+      color: colors.info,
+      fontWeight: '500',
+    },
+    emptyCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 32,
+      alignItems: 'center',
+      marginBottom: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    emptyIconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    emptySubtitle: {
+      fontSize: 14,
+      color: colors.muted2,
+      textAlign: 'center',
+    },
+    chartSection: {
+      marginBottom: 16,
+    },
+    chartHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    chartTitleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    chartTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.white,
+      marginLeft: 8,
+    },
+    periodSelector: {
+      flexDirection: 'row',
+      backgroundColor: colors.overlayLight,
+      borderRadius: 8,
+      padding: 2,
+    },
+    periodButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 6,
+    },
+    periodButtonActive: {
+      backgroundColor: colors.overlayStrong,
+    },
+    periodText: {
+      fontSize: 12,
+      color: colors.white,
+      fontWeight: '500',
+    },
+    periodTextActive: {
+      color: colors.primary,
+    },
+    recentContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    recentTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 16,
+    },
+    recentItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    recentLeft: {
+      flex: 1,
+    },
+    recentValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 2,
+    },
+    recentType: {
+      fontSize: 12,
+      color: colors.muted2,
+    },
+    recentTime: {
+      fontSize: 14,
+      color: colors.muted2,
+    },
+  });
 
 export default HomeScreen;

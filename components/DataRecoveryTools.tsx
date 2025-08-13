@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 import { SecureCloudStorage, EncryptionService } from '@/utils/secureCloudStorage';
 import { DocumentRecoveryTools } from '@/utils/documentRecovery';
 import { cleanupKnownProblematicDocuments } from '@/utils/cleanupTools';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Composant pour la gestion et réparation des données corrompues
@@ -13,6 +14,7 @@ export default function DataRecoveryTools() {
   const [isLoading, setIsLoading] = useState(false);
   const [legacyKey, setLegacyKey] = useState('');
   const [results, setResults] = useState<string | null>(null);
+  const toast = useToast();
 
   // Charger les statistiques au démarrage
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function DataRecoveryTools() {
   // Ajouter une clé legacy candidate
   const addLegacyKey = async () => {
     if (!legacyKey || legacyKey.length < 8) {
-      Alert.alert('Erreur', 'La clé doit contenir au moins 8 caractères');
+      toast.show('Erreur', 'La clé doit contenir au moins 8 caractères');
       return;
     }
 

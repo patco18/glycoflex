@@ -55,6 +55,8 @@ EXPO_PUBLIC_FIREBASE_APP_ID=votre-app-id
 
 Les valeurs seront automatiquement lues par `config/firebase.ts`.
 
+Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.
+
 ### 3. Règles Firestore
 ```javascript
 rules_version = '2';
@@ -78,6 +80,16 @@ npm run dev
 
 # Build pour production
 npm run build:web
+```
+
+## 🧪 Tests
+
+```bash
+# Exécuter les tests unitaires
+npm test
+
+# Vérifier le lint
+npm run lint
 ```
 
 ## 🏗️ Architecture
@@ -148,6 +160,12 @@ MIT License - Voir le fichier LICENSE pour plus de détails.
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! Veuillez ouvrir une issue avant de soumettre une pull request.
+
+### 🌐 Contribution à l'i18n
+
+1. Modifiez les fichiers de traduction dans `locales/en.json` et `locales/fr.json`.
+2. Exécutez `npm run i18n:check` pour vérifier les clés manquantes entre les langues.
+3. Soumettez votre pull request avec les traductions mises à jour.
 
 ## 📞 Support
 

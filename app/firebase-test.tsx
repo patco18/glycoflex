@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { db, auth } from '@/config/firebase';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataCleaner } from '@/utils/dataCleaner';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Écran de test pour les permissions Firebase
@@ -14,6 +15,7 @@ export default function FirebaseTestScreen() {
   const { user } = useAuth();
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const toast = useToast();
   
   const addLog = (message: string) => {
     setLogs(prev => [...prev, message]);
@@ -188,14 +190,14 @@ export default function FirebaseTestScreen() {
         });
         
         // Demander confirmation pour le nettoyage
-        Alert.alert(
+        toast.show(
           'Documents corrompus détectés',
           `${stats.potentiallyCorrupted} documents potentiellement corrompus ont été trouvés. Voulez-vous les marquer comme corrompus?`,
           [
             {
               text: 'Annuler',
               style: 'cancel',
-              onPress: () => addLog('❎ Nettoyage annulé par l\'utilisateur')
+              onPress: () => addLog("❎ Nettoyage annulé par l'utilisateur")
             },
             {
               text: 'Marquer',

@@ -89,3 +89,5 @@ EXPO_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
 ```
 
 Les valeurs seront automatiquement lues par `config/firebase.ts`.
+
+Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.

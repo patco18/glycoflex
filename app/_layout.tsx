@@ -8,10 +8,12 @@ import { useCloudSync } from '@/hooks/useCloudSync';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { initializeAppServices } from '@/utils/initServices';
 import { initializeCryptoPolyfills, testCryptoPolyfills } from '@/utils/cryptoInit';
 import { StorageManager } from '@/utils/storageManager';
 import '@/utils/i18n'; // Initialiser i18n
+
 
 // Initialiser les polyfills crypto dès que possible AVANT tous les autres imports
 initializeCryptoPolyfills();
@@ -77,11 +79,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <SettingsProvider>
-          <AppContent />
-        </SettingsProvider>
-      </AuthProvider>
+
     </GestureHandlerRootView>
   );
 }
