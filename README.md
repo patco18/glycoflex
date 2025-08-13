@@ -55,6 +55,8 @@ EXPO_PUBLIC_FIREBASE_APP_ID=votre-app-id
 
 Les valeurs seront automatiquement lues par `config/firebase.ts`.
 
+Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.
+
 ### 3. Règles Firestore
 ```javascript
 rules_version = '2';
