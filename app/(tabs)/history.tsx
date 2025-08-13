@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, Filter, TrendingUp, Trash2 } from 'lucide-react-native';
@@ -7,12 +7,14 @@ import { SecureHybridStorage } from '@/utils/secureCloudStorage';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import AdvancedChart from '@/components/AdvancedChart';
+import { useToast } from '@/hooks/useToast';
 
 function HistoryScreen() {
   const [measurements, setMeasurements] = useState<GlucoseMeasurement[]>([]);
   const [filteredMeasurements, setFilteredMeasurements] = useState<GlucoseMeasurement[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     loadMeasurements();
@@ -27,7 +29,7 @@ function HistoryScreen() {
   const data = await SecureHybridStorage.getMeasurements();
       setMeasurements(data);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger l\'historique');
+      toast.show('Erreur', "Impossible de charger l'historique");
     } finally {
       setLoading(false);
     }
@@ -60,20 +62,20 @@ function HistoryScreen() {
   };
 
   const handleDeleteMeasurement = async (id: string) => {
-    Alert.alert(
+    toast.show(
       'Supprimer la mesure',
       'Êtes-vous sûr de vouloir supprimer cette mesure ?',
       [
         { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Supprimer', 
+        {
+          text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
             try {
               await SecureHybridStorage.deleteMeasurement(id);
               await loadMeasurements();
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer la mesure');
+              toast.show('Erreur', 'Impossible de supprimer la mesure');
             }
           }
         }

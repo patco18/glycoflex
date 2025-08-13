@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, View, Text, Switch, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { Platform, StyleSheet, View, Text, Switch, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,7 @@ import { auth } from '@/config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
+import { useToast } from '@/hooks/useToast';
 
 const LOCAL_RECOVERY_PHRASE = 'recovery_phrase';
 
@@ -29,6 +30,7 @@ export default function SyncSettingsScreen() {
   const [legacyKeyInput, setLegacyKeyInput] = useState('');
   const [migrationRunning, setMigrationRunning] = useState(false);
   const [corruptedCounts, setCorruptedCounts] = useState<{corrupted:number; ignored:number}>({corrupted:0, ignored:0});
+  const toast = useToast();
   
   useEffect(() => {
     loadSettings();
@@ -87,7 +89,7 @@ export default function SyncSettingsScreen() {
       console.log("✅ Paramètres de synchronisation chargés avec succès");
     } catch (error) {
       console.error('❌ Échec du chargement des paramètres de synchronisation:', error);
-      Alert.alert(t('common.error'), t('syncSettings.loadError'));
+      toast.show(t('common.error'), t('syncSettings.loadError'));
     } finally {
       setLoading(false);
     }
@@ -141,7 +143,7 @@ export default function SyncSettingsScreen() {
       }
     } catch (error) {
       console.error('Échec de la modification de la synchronisation:', error);
-      Alert.alert(t('common.error'), t('syncSettings.toggleError'));
+      toast.show(t('common.error'), t('syncSettings.toggleError'));
       setSyncEnabled(!value); // Revenir à l'état précédent
     } finally {
       setSyncing(false);
@@ -158,7 +160,7 @@ export default function SyncSettingsScreen() {
       
       if (!netInfo.isConnected) {
         console.log("❌ Pas de connexion internet");
-        Alert.alert(
+        toast.show(
           t('common.error'),
           t('syncSettings.noInternetConnection'),
           [{ text: t('common.ok') }]
@@ -169,7 +171,7 @@ export default function SyncSettingsScreen() {
       // Vérifier l'état de l'authentification
       if (!auth.currentUser) {
         console.log("❌ Utilisateur non authentifié");
-        Alert.alert(
+        toast.show(
           t('common.error'),
           t('syncSettings.notLoggedIn'),
           [{ text: t('common.ok') }]
@@ -200,11 +202,11 @@ export default function SyncSettingsScreen() {
       await loadDevices();
       
       console.log("✅ Synchronisation manuelle terminée avec succès");
-      Alert.alert(t('common.success'), t('syncSettings.syncSuccess'));
+      toast.show(t('common.success'), t('syncSettings.syncSuccess'));
     } catch (error) {
       console.error('❌ Échec de la synchronisation:', error);
-      Alert.alert(
-        t('common.error'), 
+      toast.show(
+        t('common.error'),
         `${t('syncSettings.syncError')} (${error instanceof Error ? error.message : 'Unknown error'})`
       );
     } finally {
@@ -214,20 +216,20 @@ export default function SyncSettingsScreen() {
 
   const backupEncryptionKey = async () => {
     if (!recoveryPhraseCreated) {
-      Alert.alert(t('common.error'), t('syncSettings.backupNeeded'));
+      toast.show(t('common.error'), t('syncSettings.backupNeeded'));
       return;
     }
     try {
       setBackupLoading(true);
       const phrase = await SecureStore.getItemAsync(LOCAL_RECOVERY_PHRASE);
       if (!phrase) {
-        Alert.alert(t('common.error'), t('syncSettings.noPhraseFound'));
+        toast.show(t('common.error'), t('syncSettings.noPhraseFound'));
         return;
       }
       await SecureHybridStorage.backupEncryptionKeyWithPhrase(phrase);
-      Alert.alert(t('common.success'), t('syncSettings.backupSuccess'));
+      toast.show(t('common.success'), t('syncSettings.backupSuccess'));
     } catch (e) {
-      Alert.alert(t('common.error'), t('syncSettings.backupError'));
+      toast.show(t('common.error'), t('syncSettings.backupError'));
     } finally {
       setBackupLoading(false);
     }
@@ -235,19 +237,19 @@ export default function SyncSettingsScreen() {
 
   const restoreEncryptionKey = async () => {
     if (!phraseInput.trim()) {
-      Alert.alert(t('common.error'), t('syncSettings.enterRecoveryPhrase'));
+      toast.show(t('common.error'), t('syncSettings.enterRecoveryPhrase'));
       return;
     }
     try {
       setRestoreLoading(true);
       await SecureHybridStorage.restoreEncryptionKeyWithPhrase(phraseInput.trim());
-      Alert.alert(t('common.success'), t('syncSettings.restoreSuccess'));
+      toast.show(t('common.success'), t('syncSettings.restoreSuccess'));
       // Après restauration, lancer une synchro
       await SecureHybridStorage.syncWithCloud();
       const lastSync = await SecureHybridStorage.getLastSyncTime();
       setLastSyncTime(lastSync);
     } catch (e) {
-      Alert.alert(t('common.error'), t('syncSettings.restoreError'));
+      toast.show(t('common.error'), t('syncSettings.restoreError'));
     } finally {
       setRestoreLoading(false);
     }
@@ -257,10 +259,10 @@ export default function SyncSettingsScreen() {
     if (!legacyKeyInput.trim()) return;
     try {
       await EncryptionService.addLegacyKeyCandidate(legacyKeyInput.trim());
-      Alert.alert(t('common.success'), 'Clé legacy ajoutée. Relancez une migration.');
+      toast.show(t('common.success'), 'Clé legacy ajoutée. Relancez une migration.');
       setLegacyKeyInput('');
     } catch (e) {
-      Alert.alert(t('common.error'), 'Impossible d\'ajouter la clé legacy');
+      toast.show(t('common.error'), "Impossible d'ajouter la clé legacy");
     }
   };
 
@@ -269,9 +271,9 @@ export default function SyncSettingsScreen() {
       setMigrationRunning(true);
       const result = await SecureCloudStorage.forceMigrationScan();
       setCorruptedCounts({ corrupted: result.corrupted, ignored: result.ignored });
-      Alert.alert('Migration', `Cloud: ${result.totalCloud}\nCorrompus: ${result.corrupted}\nIgnorés: ${result.ignored}`);
+      toast.show('Migration', `Cloud: ${result.totalCloud}\nCorrompus: ${result.corrupted}\nIgnorés: ${result.ignored}`);
     } catch (e) {
-      Alert.alert(t('common.error'), 'Migration scan échoué');
+      toast.show(t('common.error'), 'Migration scan échoué');
     } finally {
       setMigrationRunning(false);
     }
@@ -305,7 +307,7 @@ export default function SyncSettingsScreen() {
       // Pour simplifier, nous montrons juste la phrase à l'utilisateur
       
       // Montrer la phrase de récupération à l'utilisateur
-      Alert.alert(
+      toast.show(
         t('syncSettings.recoveryPhraseTitle'),
         t('syncSettings.recoveryPhraseMessage', { phrase }),
         [
@@ -317,7 +319,7 @@ export default function SyncSettingsScreen() {
       );
     } catch (error) {
       console.error('Échec de la création de la phrase de récupération:', error);
-      Alert.alert(t('common.error'), t('syncSettings.recoveryPhraseError'));
+      toast.show(t('common.error'), t('syncSettings.recoveryPhraseError'));
     }
   };
   
@@ -325,7 +327,7 @@ export default function SyncSettingsScreen() {
     try {
       const phrase = await SecureStore.getItemAsync(LOCAL_RECOVERY_PHRASE);
       if (phrase) {
-        Alert.alert(
+        toast.show(
           t('syncSettings.recoveryPhrase'),
           t('syncSettings.recoveryPhraseShow', { phrase }),
           [
@@ -336,11 +338,11 @@ export default function SyncSettingsScreen() {
           ]
         );
       } else {
-        Alert.alert(t('common.error'), t('syncSettings.noPhraseFound'));
+        toast.show(t('common.error'), t('syncSettings.noPhraseFound'));
       }
     } catch (error) {
       console.error('Échec de l\'affichage de la phrase de récupération:', error);
-      Alert.alert(t('common.error'), t('syncSettings.showPhraseError'));
+      toast.show(t('common.error'), t('syncSettings.showPhraseError'));
     }
   };
   
@@ -348,15 +350,15 @@ export default function SyncSettingsScreen() {
     try {
       await SecureCloudStorage.removeDevice(deviceId);
       setDevices(devices.filter(d => d.id !== deviceId));
-      Alert.alert(t('common.success'), t('syncSettings.deviceRemoved'));
+      toast.show(t('common.success'), t('syncSettings.deviceRemoved'));
     } catch (error) {
       console.error('Échec de la suppression de l\'appareil:', error);
-      Alert.alert(t('common.error'), t('syncSettings.deviceRemoveError'));
+      toast.show(t('common.error'), t('syncSettings.deviceRemoveError'));
     }
   };
   
   const confirmRemoveDevice = (device: {id: string; name: string}) => {
-    Alert.alert(
+    toast.show(
       t('syncSettings.removeDevice'),
       t('syncSettings.removeDeviceConfirm', { name: device.name }),
       [

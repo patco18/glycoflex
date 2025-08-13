@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, Clock, Activity, Save, Edit } from 'lucide-react-native';
@@ -9,6 +9,7 @@ import { StorageManager } from '@/utils/storageManager';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useToast } from '@/hooks/useToast';
 
 const MEASUREMENT_TYPES = [
   { id: 'fasting', label: 'À jeun', icon: '🌅' },
@@ -25,6 +26,7 @@ function AddScreen() {
   const [selectedType, setSelectedType] = useState('fasting');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const toast = useToast();
   
   // États pour la date et l'heure
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -75,7 +77,7 @@ function AddScreen() {
 
   const handleSave = async () => {
     if (!value || isNaN(Number(value))) {
-      Alert.alert(t('common.error'), t('add.errors.invalidValue'));
+      toast.show(t('common.error'), t('add.errors.invalidValue'));
       return;
     }
 
@@ -87,7 +89,7 @@ function AddScreen() {
     const unitLabel = userSettings.unit === 'mgdl' ? 'mg/dL' : 'mmol/L';
     
     if (numericValue < minValue || numericValue > maxValue) {
-      Alert.alert(t('common.error'), t('add.errors.outOfRange', { min: minValue, max: maxValue, unit: unitLabel }));
+      toast.show(t('common.error'), t('add.errors.outOfRange', { min: minValue, max: maxValue, unit: unitLabel }));
       return;
     }
 
@@ -114,14 +116,14 @@ function AddScreen() {
         message += t('add.success.normal');
       }
 
-      Alert.alert(t('common.success'), message);
+      toast.show(t('common.success'), message);
       
       // Reset form
       setValue('');
       setSelectedType('fasting');
       setNotes('');
     } catch (error) {
-      Alert.alert(t('common.error'), t('add.errors.saveFailed'));
+      toast.show(t('common.error'), t('add.errors.saveFailed'));
     } finally {
       setSaving(false);
     }

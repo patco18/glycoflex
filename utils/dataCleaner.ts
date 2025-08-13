@@ -1,6 +1,6 @@
 import { db } from '@/config/firebase';
 import { collection, getDocs, query, where, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { Alert } from 'react-native';
+import { showToast } from '@/hooks/useToast';
 
 /**
  * Utilitaire pour nettoyer les données corrompues dans Firestore
@@ -67,7 +67,7 @@ export class DataCleaner {
       return processedDocs;
     } catch (error) {
       console.error('Erreur lors du nettoyage des données:', error);
-      Alert.alert(
+      showToast(
         'Erreur de nettoyage',
         'Une erreur est survenue lors du nettoyage des données corrompues.'
       );

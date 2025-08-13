@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { Share } from 'react-native';
 import { FileText, Download, Share as ShareIcon } from 'lucide-react-native';
 import { GlucoseMeasurement } from '@/utils/storage';
@@ -8,6 +8,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import * as FileSystem from 'expo-file-system';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { useToast } from '@/hooks/useToast';
 
 interface PDFExportProps {
   measurements: GlucoseMeasurement[];
@@ -17,6 +18,7 @@ export default function PDFExport({ measurements }: PDFExportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const { userSettings } = useSettings();
   const [logoUri, setLogoUri] = useState<string | null>(null);
+  const toast = useToast();
 
   // Charger le logo au format base64 pour l'inclure dans le PDF
   useEffect(() => {
@@ -251,7 +253,7 @@ Date d'export: ${now.toLocaleString('fr-FR')}
 
   const handleExport = async () => {
     if (measurements.length === 0) {
-      Alert.alert('Aucune donnée', 'Aucune mesure à exporter');
+      toast.show('Aucune donnée', 'Aucune mesure à exporter');
       return;
     }
 
@@ -271,7 +273,7 @@ Date d'export: ${now.toLocaleString('fr-FR')}
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        Alert.alert('Succès', 'Rapport exporté avec succès');
+        toast.show('Succès', 'Rapport exporté avec succès');
       } else {
         // Pour mobile, utiliser expo-print pour générer un PDF
         const html = generateHTML();
@@ -293,7 +295,7 @@ Date d'export: ${now.toLocaleString('fr-FR')}
       }
     } catch (error) {
       console.error('Erreur lors de l\'export:', error);
-      Alert.alert('Erreur', 'Impossible d\'exporter le rapport');
+      toast.show('Erreur', "Impossible d'exporter le rapport");
     } finally {
       setIsGenerating(false);
     }

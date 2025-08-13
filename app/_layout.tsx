@@ -8,6 +8,7 @@ import { useCloudSync } from '@/hooks/useCloudSync';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { initializeAppServices } from '@/utils/initServices';
 import { initializeCryptoPolyfills, testCryptoPolyfills } from '@/utils/cryptoInit';
 import { StorageManager } from '@/utils/storageManager';
@@ -79,7 +80,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <SettingsProvider>
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </SettingsProvider>
       </AuthProvider>
     </GestureHandlerRootView>

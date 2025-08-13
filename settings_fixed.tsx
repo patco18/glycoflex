@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { GlucoseUnit, convertGlucose } from '@/utils/units';
 import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut } from 'lucide-react-native';
+import { useToast } from '@/hooks/useToast';
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -20,6 +21,7 @@ export default function SettingsScreen() {
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(accessibilitySettings.screenReaderEnabled || false);
   const [cloudBackup, setCloudBackup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const toast = useToast();
 
   // Vérifier si la sauvegarde cloud est activée et si l'utilisateur est authentifié
   useEffect(() => {
@@ -79,20 +81,20 @@ export default function SettingsScreen() {
       try {
         await AsyncStorage.setItem('user_authenticated', 'false');
         setIsAuthenticated(false);
-        Alert.alert(
+        toast.show(
           t('settings.logout_success'),
           t('settings.logout_success_message')
         );
       } catch (error) {
         console.error('Erreur lors de la déconnexion:', error);
-        Alert.alert(
+        toast.show(
           t('settings.error'),
           t('settings.logout_error')
         );
       }
     } else {
       // Pour la connexion, simplement afficher une alerte car le login n'est pas implémenté
-      Alert.alert(
+      toast.show(
         t('settings.login'),
         t('settings.login_required'),
         [
@@ -124,7 +126,7 @@ export default function SettingsScreen() {
       setCloudBackup(value);
       
       if (value && !isAuthenticated) {
-        Alert.alert(
+        toast.show(
           t('settings.cloud_backup'),
           t('settings.login_required'),
           [
@@ -134,9 +136,9 @@ export default function SettingsScreen() {
             },
             {
               text: t('settings.login'),
-              onPress: () => Alert.alert(
-                t('settings.login'), 
-                t('settings.login_required'), 
+              onPress: () => toast.show(
+                t('settings.login'),
+                t('settings.login_required'),
                 [{ text: t('common.ok') }]
               )
             }
@@ -145,7 +147,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Erreur lors de la modification de la sauvegarde cloud:', error);
-      Alert.alert(
+      toast.show(
         t('settings.error'),
         t('settings.cloud_backup_error')
       );
@@ -155,19 +157,19 @@ export default function SettingsScreen() {
   // Pour ces fonctions de navigation, utilisons simplement des alertes 
   // car les écrans ne sont pas implémentés dans la structure d'app actuelle
   const navigateToProfile = () => {
-    Alert.alert(t('settings.profile'), t('common.feature_coming_soon'));
+    toast.show(t('settings.profile'), t('common.feature_coming_soon'));
   };
 
   const navigateToTargets = () => {
-    Alert.alert(t('settings.targets'), t('common.feature_coming_soon'));
+    toast.show(t('settings.targets'), t('common.feature_coming_soon'));
   };
 
   const navigateToNotifications = () => {
-    Alert.alert(t('settings.notifications'), t('common.feature_coming_soon'));
+    toast.show(t('settings.notifications'), t('common.feature_coming_soon'));
   };
   
   const navigateToSyncSettings = () => {
-    Alert.alert(t('settings.cloud_backup'), t('common.feature_coming_soon'));
+    toast.show(t('settings.cloud_backup'), t('common.feature_coming_soon'));
   };
 
   if (isLoading) {
