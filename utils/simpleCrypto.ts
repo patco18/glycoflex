@@ -1,5 +1,4 @@
 import CryptoJS from 'crypto-js';
-import { Platform } from 'react-native';
 
 /**
  * Service de chiffrement compatible avec React Native - VERSION SANS MODULE CRYPTO NATIF
@@ -7,13 +6,26 @@ import { Platform } from 'react-native';
  */
 export class SimpleCrypto {
   /**
-   * Génère des octets aléatoires en utilisant Math.random() (non cryptographique mais compatible)
+   * Génère des octets aléatoires en utilisant un générateur cryptographiquement sûr
+   */
+  private static getSecureBytes(length: number): Uint8Array {
+    try {
+      const { getRandomBytes } = eval('require')( 'expo-random');
+      return getRandomBytes(length);
+    } catch {
+      const { randomBytes } = eval('require')('crypto');
+      return new Uint8Array(randomBytes(length));
+    }
+  }
+
+  /**
+   * Génère une chaîne hexadécimale aléatoire sécurisée
    */
   static generateRandomBytes(length: number): string {
+    const bytes = this.getSecureBytes(length);
     let result = '';
-    const characters = '0123456789abcdef';
-    for (let i = 0; i < length * 2; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    for (let i = 0; i < bytes.length; i++) {
+      result += bytes[i].toString(16).padStart(2, '0');
     }
     return result;
   }
@@ -26,19 +38,17 @@ export class SimpleCrypto {
     const ivHex = this.generateRandomBytes(16);
     return CryptoJS.enc.Hex.parse(ivHex);
   }
-  
+
   /**
    * Génère une clé de chiffrement compatible
    */
   static generateKey(length: number = 32): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const bytes = this.getSecureBytes(length);
     let result = '';
-    
-    // Générer une chaîne aléatoire sans WordArray.random
     for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+      result += chars.charAt(bytes[i] % chars.length);
     }
-    
     return result;
   }
 
@@ -60,13 +70,12 @@ export class SimpleCrypto {
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
       });
-      
+
       // Format: [IV]:[Encrypted]
       return ivString + ':' + encrypted.toString();
     } catch (error) {
       console.error('Erreur chiffrement:', error);
-      // En cas d'échec, retourner une version encodée basique (pas sécurisée, mais fonctionnelle)
-      return 'BASIC:' + btoa(JSON.stringify(data));
+      throw new Error('Échec du chiffrement des données');
     }
   }
   
@@ -80,17 +89,9 @@ export class SimpleCrypto {
         throw new Error('Données d\'entrée invalides pour le déchiffrement');
       }
 
-      // Vérifier le format de secours
+      // Format non supporté
       if (encryptedData.startsWith('BASIC:')) {
-        // Version non chiffrée de secours
-        try {
-          const base64String = encryptedData.substring(6);
-          const jsonString = atob(base64String);
-          return JSON.parse(jsonString);
-        } catch (e) {
-          console.error('Erreur lors du décodage du format de secours:', e);
-          throw new Error('Format de secours invalide');
-        }
+        throw new Error('Format BASIC non supporté');
       }
       
       // Format normal: [IV]:[Encrypted]
