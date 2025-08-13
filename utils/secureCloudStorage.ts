@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid/non-secure';
 import { SimpleCrypto } from './simpleCrypto';
 import { Platform } from 'react-native';
 import CryptoJS from 'crypto-js';
+import * as SecureStore from 'expo-secure-store';
 
 // Note: Utilisation de SimpleCrypto pour éviter COMPLÈTEMENT les dépendances au module crypto natif
 
@@ -63,14 +64,24 @@ export class EncryptionService {
   // Initialiser la clé d'encryption utilisateur (créer ou charger)
   static async initializeEncryptionKey(): Promise<void> {
     try {
-      let key = await AsyncStorage.getItem(ENCRYPTION_KEY_STORAGE);
-      
+      // Essayer de récupérer la clé depuis le stockage sécurisé
+      let key = await SecureStore.getItemAsync(ENCRYPTION_KEY_STORAGE);
+
+      if (!key) {
+        // Migration éventuelle depuis AsyncStorage
+        key = await AsyncStorage.getItem(ENCRYPTION_KEY_STORAGE);
+        if (key) {
+          await SecureStore.setItemAsync(ENCRYPTION_KEY_STORAGE, key);
+          await AsyncStorage.removeItem(ENCRYPTION_KEY_STORAGE);
+        }
+      }
+
       if (!key) {
         // Générer une nouvelle clé en utilisant SimpleCrypto
         key = SimpleCrypto.generateKey(32);
-        await AsyncStorage.setItem(ENCRYPTION_KEY_STORAGE, key);
+        await SecureStore.setItemAsync(ENCRYPTION_KEY_STORAGE, key);
       }
-      
+
       this.encryptionKey = key;
       // Pré-calculer un hash court pour instrumentation
       try {
@@ -81,8 +92,10 @@ export class EncryptionService {
       try {
         const legacyJson = await AsyncStorage.getItem(LEGACY_KEYS_STORAGE);
         this.legacyKeys = legacyJson ? JSON.parse(legacyJson) : [];
-      } catch { this.legacyKeys = []; }
-      
+      } catch {
+        this.legacyKeys = [];
+      }
+
       // Tester que le chiffrement fonctionne
       const testResult = SimpleCrypto.testCrypto();
       if (testResult) {
@@ -91,8 +104,8 @@ export class EncryptionService {
         console.warn('⚠️ Test de chiffrement échoué');
       }
     } catch (error) {
-      console.error('Échec de l\'initialisation de la clé d\'encryption:', error);
-      throw new Error('Échec de l\'initialisation du chiffrement');
+      console.error("Échec de l'initialisation de la clé d'encryption:", error);
+      throw new Error("Échec de l'initialisation du chiffrement");
     }
   }
 
@@ -186,8 +199,33 @@ export class EncryptionService {
   
   // Importer une clé d'encryption (lors de la restauration sur un nouvel appareil)
   static async importEncryptionKey(key: string): Promise<void> {
-    await AsyncStorage.setItem(ENCRYPTION_KEY_STORAGE, key);
+    await SecureStore.setItemAsync(ENCRYPTION_KEY_STORAGE, key);
+    await AsyncStorage.removeItem(ENCRYPTION_KEY_STORAGE);
     this.encryptionKey = key;
+    try {
+      this.keyHashCache = CryptoJS.SHA256(key).toString().substring(0, 12);
+    } catch {}
+  }
+
+  // Rotation de la clé d'encryption - génère une nouvelle clé et archive l'ancienne
+  static async rotateEncryptionKey(): Promise<void> {
+    if (!this.encryptionKey) {
+      await this.initializeEncryptionKey();
+    }
+    if (!this.encryptionKey) {
+      throw new Error('Clé de chiffrement non initialisée');
+    }
+
+    const oldKey = this.encryptionKey;
+    await this.addLegacyKeyCandidate(oldKey);
+
+    const newKey = SimpleCrypto.generateKey(32);
+    await SecureStore.setItemAsync(ENCRYPTION_KEY_STORAGE, newKey);
+    await AsyncStorage.removeItem(ENCRYPTION_KEY_STORAGE);
+    this.encryptionKey = newKey;
+    try {
+      this.keyHashCache = CryptoJS.SHA256(newKey).toString().substring(0, 12);
+    } catch {}
   }
 
   // Dériver une clé à partir d'une phrase de récupération (PBKDF2)
