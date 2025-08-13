@@ -2,36 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, Filter, TrendingUp, Trash2 } from 'lucide-react-native';
-import { SecureHybridStorage } from '@/utils/secureCloudStorage';
-import { GlucoseMeasurement } from '@/utils/storage';
+import { Calendar, TrendingUp, Trash2 } from 'lucide-react-native';
+import type { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import AdvancedChart from '@/components/AdvancedChart';
+import { useMeasurements, useDeleteMeasurement } from '@/hooks/useMeasurements';
 
 function HistoryScreen() {
-  const [measurements, setMeasurements] = useState<GlucoseMeasurement[]>([]);
+  const { data: measurements = [], isLoading, error } = useMeasurements();
+  const deleteMeasurement = useDeleteMeasurement();
   const [filteredMeasurements, setFilteredMeasurements] = useState<GlucoseMeasurement[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMeasurements();
-  }, []);
+    if (error) {
+      Alert.alert('Erreur', "Impossible de charger l'historique");
+    }
+  }, [error]);
 
   useEffect(() => {
     filterMeasurements();
   }, [measurements, selectedFilter]);
-
-  const loadMeasurements = async () => {
-    try {
-  const data = await SecureHybridStorage.getMeasurements();
-      setMeasurements(data);
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger l\'historique');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterMeasurements = () => {
     const now = new Date();
@@ -59,24 +50,23 @@ function HistoryScreen() {
     setFilteredMeasurements(filtered);
   };
 
-  const handleDeleteMeasurement = async (id: string) => {
+  const handleDeleteMeasurement = (id: string) => {
     Alert.alert(
       'Supprimer la mesure',
       'Êtes-vous sûr de vouloir supprimer cette mesure ?',
       [
         { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Supprimer', 
+        {
+          text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
             try {
-              await SecureHybridStorage.deleteMeasurement(id);
-              await loadMeasurements();
-            } catch (error) {
+              await deleteMeasurement.mutateAsync(id);
+            } catch (err) {
               Alert.alert('Erreur', 'Impossible de supprimer la mesure');
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -108,7 +98,7 @@ function HistoryScreen() {
     { id: 'month', label: '30 jours' },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>

@@ -4,43 +4,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, TriangleAlert as AlertTriangle, Activity, Sparkles, ChartBar as BarChart3 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { StorageManager } from '@/utils/storageManager';
-import { GlucoseMeasurement } from '@/utils/storage';
-import { getGlucoseStatus, calculateStats, filterMeasurementsByDateRange } from '@/utils/glucose';
+import { getGlucoseStatus, calculateStats } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
 import AdvancedChart from '@/components/AdvancedChart';
 import PredictiveAnalysis from '@/components/PredictiveAnalysis';
 import ComparisonAnalysis from '@/components/ComparisonAnalysis';
 import PDFExport from '@/components/PDFExport';
 import StatsCards from '@/components/StatsCards';
+import { useMeasurements } from '@/hooks/useMeasurements';
 
 function HomeScreen() {
   const { t } = useTranslation();
   const { userSettings } = useSettings();
-  const [measurements, setMeasurements] = useState<GlucoseMeasurement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { data: measurements = [], isLoading, refetch, error, isFetching } = useMeasurements();
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
 
   useEffect(() => {
-    loadMeasurements();
-  }, []);
-
-  const loadMeasurements = async () => {
-    try {
-      const data = await StorageManager.getMeasurements();
-      setMeasurements(data);
-    } catch (error) {
+    if (error) {
       Alert.alert('Erreur', 'Impossible de charger les mesures');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
-  };
+  }, [error]);
 
   const onRefresh = () => {
-    setRefreshing(true);
-    loadMeasurements();
+    refetch();
   };
 
   const calculateTimeInRange = () => {
@@ -96,7 +82,7 @@ function HomeScreen() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -116,7 +102,7 @@ function HomeScreen() {
           style={styles.scrollView} 
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={isFetching} onRefresh={onRefresh} />
           }
         >
           <View style={styles.header}>
