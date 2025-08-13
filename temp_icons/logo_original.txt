@@ -1,0 +1,2 @@
+// Placeholder file for keeping track of original logo
+// The actual logo will be prepared as icon.png and favicon.png

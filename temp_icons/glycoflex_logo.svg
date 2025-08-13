@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="240" viewBox="0 0 200 240">
+  <style>
+    .droplet { fill: #1EB4B4; }
+    .cross { fill: white; }
+    .smile { fill: none; stroke: white; stroke-width: 5; }
+    .text { fill: #1EB4B4; font-family: Arial, sans-serif; font-weight: bold; }
+  </style>
+  
+  <!-- Droplet shape -->
+  <path class="droplet" d="M100,20 C100,20 60,80 60,120 C60,153.137 77.9086,180 100,180 C122.091,180 140,153.137 140,120 C140,80 100,20 100,20 Z" />
+  
+  <!-- Cross in the droplet -->
+  <rect class="cross" x="85" y="70" width="30" height="10" />
+  <rect class="cross" x="95" y="60" width="10" height="30" />
+  
+  <!-- Smile under the cross -->
+  <path class="smile" d="M80,130 C80,130 90,145 120,130" />
+  
+  <!-- Text "GlycoFlex" -->
+  <text class="text" x="32" y="220" font-size="28">GlycoFlex</text>
+</svg>

@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "720234915029",
-    "project_id": "glycoflex-9c7fa",
-    "storage_bucket": "glycoflex-9c7fa.firebasestorage.app"
+    "project_number": "906933577031",
+    "project_id": "glycoflex-app",
+    "storage_bucket": "glycoflex-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:720234915029:android:92cfe933c677bc8d0fae5c",
+        "mobilesdk_app_id": "1:906933577031:android:ca1e931fb59dcd14b89862",
         "android_client_info": {
-          "package_name": "com.patco18.glucosetracker"
+          "package_name": "com.glycoflex.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBdoczkJY5Jw4ulzjDjp16pLm5b_9l3Rps"
+          "current_key": "AIzaSyD4Hoh5qdS11b94FBNExMRrzBahj2EzNsk"
         }
       ],
       "services": {

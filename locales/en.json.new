@@ -1,0 +1,175 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "hour": "Hour",
+    "minute": "Min"
+  },
+  "navigation": {
+    "home": "Home",
+    "add": "Add",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "GlycoFlex",
+    "subtitle": "Dashboard",
+    "lastMeasurement": "Last measurement",
+    "noMeasurements": "No measurements",
+    "addFirstMeasurement": "Start by adding your first measurement",
+    "recentMeasurements": "Recent measurements",
+    "chart": "Chart",
+    "days7": "7D",
+    "days30": "30D"
+  },
+  "add": {
+    "title": "New Measurement",
+    "subtitle": "Record your glucose level",
+    "value": "Value",
+    "unit": "{{unit}}",
+    "measurementType": "Measurement type",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "Add notes about your measurement...",
+    "dateTime": "Date and time",
+    "useCurrentTime": "Use current time",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "save": "Save",
+    "saving": "Saving...",
+    "types": {
+      "fasting": "Fasting",
+      "before_meal": "Before meal",
+      "after_meal": "After meal",
+      "bedtime": "Bedtime",
+      "random": "Random"
+    },
+    "status": {
+      "low": "⚠️ Low glucose",
+      "high": "⚠️ High glucose",
+      "normal": "✅ Normal glucose"
+    },
+    "errors": {
+      "invalidValue": "Please enter a valid value",
+      "outOfRange": "Value must be between {{min}} and {{max}} {{unit}}",
+      "saveFailed": "Failed to save measurement"
+    },
+    "success": {
+      "saved": "Measurement saved successfully",
+      "lowWarning": "\n⚠️ Warning: Low glucose",
+      "highWarning": "\n⚠️ Warning: High glucose",
+      "normal": "\n✅ Normal glucose"
+    }
+  },
+  "history": {
+    "title": "History",
+    "measurements": "{{count}} measurement",
+    "measurements_plural": "{{count}} measurements",
+    "filters": {
+      "all": "All",
+      "today": "Today",
+      "week": "7 days",
+      "month": "30 days"
+    },
+    "noData": "No measurements",
+    "noDataSubtitle": "No measurements found for this period",
+    "deleteConfirm": "Delete measurement",
+    "deleteMessage": "Are you sure you want to delete this measurement?",
+    "status": {
+      "low": "Low",
+      "high": "High",
+      "normal": "Normal"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Customize your tracking",
+    "profile": "Profile",
+    "name": "Name",
+    "age": "Age",
+    "targets": "Glucose targets",
+    "targetsDescription": "Set your target glucose range in {{unit}}",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "notifications": "Notifications",
+    "reminders": "Measurement reminders",
+    "remindersDescription": "Receive reminders to take your measurements",
+    "language": "Language",
+    "units": "Units",
+    "timezone": "Time zone",
+    "accessibility": "Accessibility",
+    "highContrast": "High contrast",
+    "largeText": "Large text",
+    "screenReader": "Screen reader support",
+    "info": "Information",
+    "normalRanges": "Normal glucose ranges",
+    "fasting": "Fasting: {{min}}-{{max}} {{unit}}",
+    "postMeal": "Post-meal: {{min}}-{{max}} {{unit}}",
+    "random": "Random: {{min}}-{{max}} {{unit}}",
+    "warning": "⚠️ These values are indicative. Consult your doctor for personalized recommendations.",
+    "languages": {
+      "en": "English",
+      "fr": "Français"
+    },
+    "unitsOptions": {
+      "mgdl": "mg/dL",
+      "mmoll": "mmol/L"
+    }
+  },
+  "analytics": {
+    "predictive": "Predictive Analysis",
+    "comparison": "Comparative Analysis",
+    "export": "PDF/Report Export",
+    "chart": "Chart",
+    "trendData": {
+      "increasing": "Upward trend",
+      "decreasing": "Downward trend",
+      "stable": "Stable trend"
+    },
+    "confidence": "Confidence: {{percent}}%",
+    "nextValue": "Estimated next value",
+    "riskLevel": "Risk level",
+    "risk": {
+      "low": "LOW",
+      "medium": "MEDIUM",
+      "high": "HIGH"
+    },
+    "recommendation": "Recommendation",
+    "timeInRange": "Time in range",
+    "timeInRangeDescription": "Percentage of measurements in normal range ({{min}}-{{max}} {{unit}})",
+    "average": "Average",
+    "minimum": "Minimum",
+    "maximum": "Maximum",
+    "trend": "Trend",
+    "insufficientData": "More data needed for comparison",
+    "insufficientPredictive": "At least 3 measurements needed for predictive analysis"
+  },
+  "notifications": {
+    "title": "🩸 Glucose Reminder",
+    "body": "It is time to take your glucose measurement",
+    "lowAlert": "⚠️ Low Glucose",
+    "highAlert": "⚠️ High Glucose",
+    "lowMessage": "Warning: {{value}} {{unit}} - Consume carbs quickly",
+    "highMessage": "Warning: {{value}} {{unit}} - Consult your doctor",
+    "permissionTitle": "Notifications",
+    "permissionMessage": "We need your permission to display notifications",
+    "grantPermission": "Grant permission",
+    "automaticReminders": "Automatic reminders",
+    "reminderDescription": "Receive reminders to take your measurements",
+    "reminderTimes": "Reminder times:",
+    "permissionStatus": "Permission status:",
+    "granted": "✅ Granted",
+    "denied": "❌ Denied"
+  }
+}

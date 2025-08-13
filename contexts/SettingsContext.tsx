@@ -8,6 +8,13 @@ export type Language = 'fr' | 'en';
 export interface UserSettings {
   name: string;
   age: string;
+  gender: string;
+  weight: string;
+  height: string;
+  medicalId: string;
+  doctorName: string;
+  medicalConditions: string[];
+  medications: string[];
   targetMin: string;
   targetMax: string;
   notifications: boolean;
@@ -34,6 +41,13 @@ interface SettingsContextType {
 const defaultUserSettings: UserSettings = {
   name: '',
   age: '',
+  gender: '',
+  weight: '',
+  height: '',
+  medicalId: '',
+  doctorName: '',
+  medicalConditions: [],
+  medications: [],
   targetMin: '70',
   targetMax: '140',
   notifications: true,
@@ -103,7 +117,33 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
   const updateUserSetting = async (key: keyof UserSettings, value: string | boolean) => {
     try {
-      const newSettings = { ...userSettings, [key]: value };
+      let newSettings = { ...userSettings };
+
+      // Si l'unité change, convertir les valeurs min et max
+      if (key === 'unit' && value !== userSettings.unit) {
+        const fromUnit = userSettings.unit;
+        const toUnit = value as GlucoseUnit;
+        
+        // Importer la fonction de conversion dynamiquement pour éviter les dépendances circulaires
+        const { convertGlucose } = await import('@/utils/units');
+        
+        // Convertir les valeurs cibles
+        const targetMin = parseFloat(userSettings.targetMin);
+        const targetMax = parseFloat(userSettings.targetMax);
+        
+        if (!isNaN(targetMin)) {
+          const convertedMin = convertGlucose(targetMin, fromUnit as GlucoseUnit, toUnit);
+          newSettings.targetMin = toUnit === 'mmoll' ? convertedMin.toFixed(1) : Math.round(convertedMin).toString();
+        }
+        
+        if (!isNaN(targetMax)) {
+          const convertedMax = convertGlucose(targetMax, fromUnit as GlucoseUnit, toUnit);
+          newSettings.targetMax = toUnit === 'mmoll' ? convertedMax.toFixed(1) : Math.round(convertedMax).toString();
+        }
+      }
+
+      // Mettre à jour la valeur demandée
+      newSettings = { ...newSettings, [key]: value };
       setUserSettings(newSettings);
       await AsyncStorage.setItem('userSettings', JSON.stringify(newSettings));
       

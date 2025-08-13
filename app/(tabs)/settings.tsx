@@ -1,488 +1,613 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, Target, Bell, Info, Save, Globe, Accessibility, Cloud, FolderSync as Sync } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { GlucoseUnit, convertGlucose } from '@/utils/units';
+import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut, User, Database } from 'lucide-react-native';
+import EmergencyCleanup from '@/components/EmergencyCleanup';
 
-function SettingsScreen() {
-  const { t } = useTranslation();
-  const {
-    userSettings,
-    accessibilitySettings,
-    updateUserSetting,
-    updateAccessibilitySetting,
-    isLoading
-  } = useSettings();
-  const [saving, setSaving] = useState(false);
+export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
+  const { userSettings, accessibilitySettings, updateUserSetting, updateAccessibilitySetting, isLoading } = useSettings();
+  const { user, logout } = useAuth();
+  
+  const [language, setLanguage] = useState(i18n.language || 'en');
+  const [unit, setUnit] = useState<GlucoseUnit>(userSettings.unit || 'mgdl');
+  const [highContrast, setHighContrast] = useState(accessibilitySettings.highContrast || false);
+  const [largeText, setLargeText] = useState(accessibilitySettings.largeText || false);
+  const [screenReaderEnabled, setScreenReaderEnabled] = useState(accessibilitySettings.screenReaderEnabled || false);
+  const [cloudBackup, setCloudBackup] = useState(false);
 
-  const saveSettings = async () => {
-    setSaving(true);
-    try {
-      Alert.alert(t('common.success'), 'Paramètres sauvegardés');
-    } catch (error) {
-      Alert.alert(t('common.error'), 'Impossible de sauvegarder');
-    } finally {
-      setSaving(false);
+  // Vérifier si la sauvegarde cloud est activée
+  useEffect(() => {
+    const checkCloudBackup = async () => {
+      try {
+        const enabled = await AsyncStorage.getItem('secure_cloud_sync_enabled');
+        setCloudBackup(enabled === 'true');
+      } catch (error) {
+        console.error('Erreur lors de la vérification de la sauvegarde cloud:', error);
+      }
+    };
+    
+    checkCloudBackup();
+  }, []);
+  
+  // Changer la langue de l'application
+  const handleChangeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    setLanguage(lng);
+    updateUserSetting('language', lng);
+  };
+
+  // Changer l'unité de mesure
+  const handleUnitChange = (newUnit: GlucoseUnit) => {
+    if (newUnit === unit) return;
+    
+    // Convertir les cibles en changeant d'unité
+    const targetMin = parseFloat(userSettings.targetMin);
+    const targetMax = parseFloat(userSettings.targetMax);
+    
+    let newTargetMin: string = '';
+    let newTargetMax: string = '';
+    
+    if (newUnit === 'mmoll' && unit === 'mgdl') {
+      // Convertir de mg/dL à mmol/L
+      newTargetMin = convertGlucose(targetMin, 'mgdl', 'mmoll').toFixed(1);
+      newTargetMax = convertGlucose(targetMax, 'mgdl', 'mmoll').toFixed(1);
+    } else if (newUnit === 'mgdl' && unit === 'mmoll') {
+      // Convertir de mmol/L à mg/dL
+      newTargetMin = Math.round(convertGlucose(targetMin, 'mmoll', 'mgdl')).toString();
+      newTargetMax = Math.round(convertGlucose(targetMax, 'mmoll', 'mgdl')).toString();
+    }
+    
+    setUnit(newUnit);
+    updateUserSetting('unit', newUnit);
+    updateUserSetting('targetMin', newTargetMin);
+    updateUserSetting('targetMax', newTargetMax);
+  };
+  
+  // Gérer l'authentification utilisateur pour la sauvegarde cloud
+  const handleAuthentication = async () => {
+    if (user) {
+      // Déconnexion
+      try {
+        await logout();
+        Alert.alert(
+          t('settings.logout_success'),
+          t('settings.logout_success_message')
+        );
+      } catch (error) {
+        console.error('Erreur lors de la déconnexion:', error);
+        Alert.alert(
+          t('settings.error'),
+          t('settings.logout_error')
+        );
+      }
+    } else {
+      // Rediriger vers l'écran d'authentification
+      router.push('/auth');
     }
   };
 
-  const changeLanguage = async (language: string) => {
-    await updateUserSetting('language', language);
+  const toggleHighContrast = async (value: boolean) => {
+    setHighContrast(value);
+    await updateAccessibilitySetting('highContrast', value);
   };
 
-  const ranges = {
-    fasting: { min: 70, max: 110 },
-    postMeal: { min: 80, max: 140 },
-    random: { min: 70, max: 140 },
-    low: 70,
-    high: 140,
+  const toggleLargeText = async (value: boolean) => {
+    setLargeText(value);
+    await updateAccessibilitySetting('largeText', value);
   };
-  const unitLabel = userSettings.unit === 'mgdl' ? 'mg/dL' : 'mmol/L';
+  
+  const toggleScreenReader = async (value: boolean) => {
+    setScreenReaderEnabled(value);
+    await updateAccessibilitySetting('screenReaderEnabled', value);
+  };
+  
+  // Activer ou désactiver la sauvegarde cloud
+  const toggleCloudBackup = async (value: boolean) => {
+    try {
+      await AsyncStorage.setItem('secure_cloud_sync_enabled', value ? 'true' : 'false');
+      setCloudBackup(value);
+      
+      if (value && !user) {
+        Alert.alert(
+          t('settings.cloud_backup'),
+          t('settings.login_required'),
+          [
+            {
+              text: t('common.cancel'),
+              style: 'cancel'
+            },
+            {
+              text: t('auth.login'),
+              onPress: () => router.push('/auth')
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors de la modification de la sauvegarde cloud:', error);
+      Alert.alert(
+        t('settings.error'),
+        t('settings.cloud_backup_error')
+      );
+    }
+  };
+
+  // Pour ces fonctions de navigation, utilisons simplement des alertes 
+  // car les écrans ne sont pas implémentés dans la structure d'app actuelle
+  const navigateToProfile = () => {
+    Alert.alert(t('settings.profile'), t('common.feature_coming_soon'));
+  };
+
+  const navigateToTargets = () => {
+    Alert.alert(t('settings.targets'), t('common.feature_coming_soon'));
+  };
+
+  const navigateToNotifications = () => {
+    Alert.alert(t('settings.notifications'), t('common.feature_coming_soon'));
+  };
+  
+  const navigateToSyncSettings = () => {
+    router.push('/storage-diagnostic');
+  };
+
+  const navigateToStorageDiagnostic = () => {
+    router.push('/storage-diagnostic');
+  };
 
   if (isLoading) {
-    return <View style={styles.loadingContainer}><Text>{t('common.loading')}</Text></View>;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>{t('common.loading')}</Text>
+      </View>
+    );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#667EEA', '#764BA2', '#F093FB']}
-        style={styles.gradient}
-      >
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={styles.title}>{t('settings.title')}</Text>
-            <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
-          </View>
-
-          <View style={styles.section}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <LinearGradient
+          colors={['#667EEA', '#764BA2', '#F093FB']}
+          style={styles.headerGradient}
+        >
+          <Text style={styles.headerTitle}>{t('settings.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('settings.subtitle')}</Text>
+        </LinearGradient>
+        
+        <View style={styles.content}>
+          {/* Profile Section */}
+          <TouchableOpacity 
+            style={styles.section}
+            onPress={navigateToProfile}
+          >
             <View style={styles.sectionHeader}>
-              <User size={20} color="#667EEA" />
+              <View style={styles.iconContainer}>
+                <Globe size={24} color="#667EEA" />
+              </View>
               <Text style={styles.sectionTitle}>{t('settings.profile')}</Text>
             </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('settings.name')}</Text>
-              <TextInput
-                style={styles.input}
-                value={userSettings.name}
-                onChangeText={(value) => updateUserSetting('name', value)}
-                placeholder={t('settings.name')}
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>{t('settings.age')}</Text>
-              <TextInput
-                style={styles.input}
-                value={userSettings.age}
-                onChangeText={(value) => updateUserSetting('age', value)}
-                placeholder={t('settings.age')}
-                keyboardType="numeric"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Target size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('settings.targets')}</Text>
-            </View>
-            
             <Text style={styles.sectionDescription}>
-              {t('settings.targetsDescription', { unit: unitLabel })}
-            </Text>
-
-            <View style={styles.rangeContainer}>
-              <View style={styles.rangeInput}>
-                <Text style={styles.label}>{t('settings.minimum')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={userSettings.targetMin}
-                  onChangeText={(value) => updateUserSetting('targetMin', value)}
-                  placeholder={ranges.low.toString()}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-              <Text style={styles.rangeSeparator}>-</Text>
-              <View style={styles.rangeInput}>
-                <Text style={styles.label}>{t('settings.maximum')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={userSettings.targetMax}
-                  onChangeText={(value) => updateUserSetting('targetMax', value)}
-                  placeholder={ranges.high.toString()}
-                  keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Globe size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
-            </View>
-            
-            <View style={styles.languageContainer}>
-              <TouchableOpacity
-                style={[styles.languageButton, userSettings.language === 'fr' && styles.languageButtonActive]}
-                onPress={() => changeLanguage('fr')}
-              >
-                <Text style={[styles.languageText, userSettings.language === 'fr' && styles.languageTextActive]}>
-                  {t('settings.languages.fr')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.languageButton, userSettings.language === 'en' && styles.languageButtonActive]}
-                onPress={() => changeLanguage('en')}
-              >
-                <Text style={[styles.languageText, userSettings.language === 'en' && styles.languageTextActive]}>
-                  {t('settings.languages.en')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Target size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('settings.units')}</Text>
-            </View>
-            
-            <View style={styles.unitContainer}>
-              <TouchableOpacity
-                style={[styles.unitButton, userSettings.unit === 'mgdl' && styles.unitButtonActive]}
-                onPress={() => updateUserSetting('unit', 'mgdl')}
-              >
-                <Text style={[styles.unitText, userSettings.unit === 'mgdl' && styles.unitTextActive]}>
-                  {t('settings.units.mgdl')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.unitButton, userSettings.unit === 'mmoll' && styles.unitButtonActive]}
-                onPress={() => updateUserSetting('unit', 'mmoll')}
-              >
-                <Text style={[styles.unitText, userSettings.unit === 'mmoll' && styles.unitTextActive]}>
-                  {t('settings.units.mmoll')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Accessibility size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('settings.accessibility')}</Text>
-            </View>
-            
-            <View style={styles.accessibilityOption}>
-              <View style={styles.optionLeft}>
-                <Text style={styles.optionLabel}>{t('settings.highContrast')}</Text>
-              </View>
-              <Switch
-                value={accessibilitySettings.highContrast}
-                onValueChange={(value) => updateAccessibilitySetting('highContrast', value)}
-                trackColor={{ false: '#CBD5E0', true: '#667EEA' }}
-                thumbColor={accessibilitySettings.highContrast ? '#FFFFFF' : '#F7FAFC'}
-              />
-            </View>
-
-            <View style={styles.accessibilityOption}>
-              <View style={styles.optionLeft}>
-                <Text style={styles.optionLabel}>{t('settings.largeText')}</Text>
-              </View>
-              <Switch
-                value={accessibilitySettings.largeText}
-                onValueChange={(value) => updateAccessibilitySetting('largeText', value)}
-                trackColor={{ false: '#CBD5E0', true: '#667EEA' }}
-                thumbColor={accessibilitySettings.largeText ? '#FFFFFF' : '#F7FAFC'}
-              />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Bell size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
-            </View>
-            
-            <TouchableOpacity
-              style={styles.toggleContainer}
-              onPress={() => updateUserSetting('notifications', !userSettings.notifications)}
-            >
-              <View style={styles.toggleLeft}>
-                <Text style={styles.toggleLabel}>{t('settings.reminders')}</Text>
-                <Text style={styles.toggleDescription}>
-                  {t('settings.remindersDescription')}
-                </Text>
-              </View>
-              <Switch
-                value={userSettings.notifications}
-                onValueChange={(value) => updateUserSetting('notifications', value)}
-                trackColor={{ false: '#CBD5E0', true: '#667EEA' }}
-                thumbColor={userSettings.notifications ? '#FFFFFF' : '#F7FAFC'}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Info size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('settings.info')}</Text>
-            </View>
-            
-            <View style={styles.infoContainer}>
-              <Text style={styles.infoTitle}>{t('settings.normalRanges')}</Text>
-              <Text style={styles.infoText}>
-                {t('settings.fasting', { min: ranges.fasting.min, max: ranges.fasting.max, unit: unitLabel })}
-              </Text>
-              <Text style={styles.infoText}>
-                {t('settings.postMeal', { min: ranges.postMeal.min, max: ranges.postMeal.max, unit: unitLabel })}
-              </Text>
-              <Text style={styles.infoText}>
-                {t('settings.random', { min: ranges.random.min, max: ranges.random.max, unit: unitLabel })}
-              </Text>
-              
-              <Text style={styles.warningText}>
-                {t('settings.warning')}
-              </Text>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-            onPress={saveSettings}
-            disabled={saving}
-          >
-            <Save size={20} color="#FFFFFF" />
-            <Text style={styles.saveButtonText}>
-              {saving ? t('common.loading') : t('common.save')}
+              {t('settings.profileNote')}
             </Text>
           </TouchableOpacity>
-        </ScrollView>
-      </LinearGradient>
+          
+          {/* Storage Diagnostic Section (Advanced) */}
+          {user && (
+            <TouchableOpacity 
+              style={styles.section}
+              onPress={navigateToStorageDiagnostic}
+            >
+              <View style={styles.sectionHeader}>
+                <View style={styles.iconContainer}>
+                  <Database size={24} color="#667EEA" />
+                </View>
+                <Text style={styles.sectionTitle}>Diagnostic de Stockage</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                Analyser et réparer les problèmes de stockage et synchronisation des données.
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Emergency Cleanup Section */}
+          {user && (
+            <EmergencyCleanup />
+          )}
+          
+          {/* Cloud Backup Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <Cloud size={24} color="#667EEA" />
+              </View>
+              <Text style={styles.sectionTitle}>{t('settings.cloudBackup')}</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
+              {t('settings.cloudBackupDescription')}
+            </Text>
+            <View style={styles.settingRow}>
+              <Text style={styles.settingText}>{t('settings.enableSync')}</Text>
+              <Switch
+                value={cloudBackup}
+                onValueChange={toggleCloudBackup}
+                trackColor={{ false: '#D1D5DB', true: '#667EEA' }}
+                thumbColor={cloudBackup ? '#FFFFFF' : '#F3F4F6'}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.authButton}
+              onPress={handleAuthentication}
+            >
+              <View style={styles.authButtonContent}>
+                {user ? (
+                  <LogOut size={20} color="#FFFFFF" />
+                ) : (
+                  <LogIn size={20} color="#FFFFFF" />
+                )}
+                <Text style={styles.authButtonText}>
+                  {user 
+                    ? t('settings.logout')
+                    : t('auth.login')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Account Info Section */}
+          {user && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <User size={20} color="#667EEA" />
+                <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                {t('auth.email')}: {user.email}
+              </Text>
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={() => router.push('/profile')}
+              >
+                <Text style={styles.profileButtonText}>{t('profile.title')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {/* Targets Section */}
+          <TouchableOpacity 
+            style={styles.section}
+            onPress={navigateToTargets}
+          >
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <Info size={24} color="#667EEA" />
+              </View>
+              <Text style={styles.sectionTitle}>{t('settings.targets')}</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
+              {t('settings.targetsDescription', { unit: t(`settings.unitsOptions.${unit}`) })}
+            </Text>
+            <View style={styles.targetsPreview}>
+              <View style={styles.targetItem}>
+                <Text style={styles.targetLabel}>{t('settings.targetMin')}</Text>
+                <Text style={styles.targetValue}>{userSettings.targetMin} {unit === 'mgdl' ? 'mg/dL' : 'mmol/L'}</Text>
+              </View>
+              <View style={styles.targetItem}>
+                <Text style={styles.targetLabel}>{t('settings.targetMax')}</Text>
+                <Text style={styles.targetValue}>{userSettings.targetMax} {unit === 'mgdl' ? 'mg/dL' : 'mmol/L'}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+          {/* Units Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <Clock size={24} color="#667EEA" />
+              </View>
+              <Text style={styles.sectionTitle}>{t('settings.units')}</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
+              {t('settings.unitsDescription')}
+            </Text>
+            <View style={styles.radioGroup}>
+              <TouchableOpacity 
+                style={[styles.radioOption, unit === 'mgdl' && styles.radioSelected]}
+                onPress={() => handleUnitChange('mgdl')}
+              >
+                <View style={[styles.radioCircle, unit === 'mgdl' && styles.radioCircleSelected]}>
+                  {unit === 'mgdl' && <View style={styles.radioInner} />}
+                </View>
+                <Text style={styles.radioText}>mg/dL</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.radioOption, unit === 'mmoll' && styles.radioSelected]}
+                onPress={() => handleUnitChange('mmoll')}
+              >
+                <View style={[styles.radioCircle, unit === 'mmoll' && styles.radioCircleSelected]}>
+                  {unit === 'mmoll' && <View style={styles.radioInner} />}
+                </View>
+                <Text style={styles.radioText}>mmol/L</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Language Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <Languages size={24} color="#667EEA" />
+              </View>
+              <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
+              {t('settings.languageDescription')}
+            </Text>
+            <View style={styles.radioGroup}>
+              <TouchableOpacity 
+                style={[styles.radioOption, language === 'fr' && styles.radioSelected]}
+                onPress={() => handleChangeLanguage('fr')}
+              >
+                <View style={[styles.radioCircle, language === 'fr' && styles.radioCircleSelected]}>
+                  {language === 'fr' && <View style={styles.radioInner} />}
+                </View>
+                <Text style={styles.radioText}>Français</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.radioOption, language === 'en' && styles.radioSelected]}
+                onPress={() => handleChangeLanguage('en')}
+              >
+                <View style={[styles.radioCircle, language === 'en' && styles.radioCircleSelected]}>
+                  {language === 'en' && <View style={styles.radioInner} />}
+                </View>
+                <Text style={styles.radioText}>English</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          {/* Notifications Section */}
+          <TouchableOpacity 
+            style={styles.section}
+            onPress={navigateToNotifications}
+          >
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <Bell size={24} color="#667EEA" />
+              </View>
+              <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
+              {t('settings.notificationsDescription')}
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Accessibility Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.iconContainer}>
+                <Paintbrush size={24} color="#667EEA" />
+              </View>
+              <Text style={styles.sectionTitle}>{t('settings.accessibility')}</Text>
+            </View>
+            <Text style={styles.sectionDescription}>
+              {t('settings.accessibilityDescription')}
+            </Text>
+            
+            <View style={styles.settingRow}>
+              <Text style={styles.settingText}>{t('settings.highContrast')}</Text>
+              <Switch
+                value={highContrast}
+                onValueChange={toggleHighContrast}
+                trackColor={{ false: '#D1D5DB', true: '#667EEA' }}
+                thumbColor={highContrast ? '#FFFFFF' : '#F3F4F6'}
+              />
+            </View>
+            
+            <View style={styles.settingRow}>
+              <Text style={styles.settingText}>{t('settings.largeText')}</Text>
+              <Switch
+                value={largeText}
+                onValueChange={toggleLargeText}
+                trackColor={{ false: '#D1D5DB', true: '#667EEA' }}
+                thumbColor={largeText ? '#FFFFFF' : '#F3F4F6'}
+              />
+            </View>
+            
+            <View style={styles.settingRow}>
+              <Text style={styles.settingText}>{t('settings.screenReader')}</Text>
+              <Switch
+                value={screenReaderEnabled}
+                onValueChange={toggleScreenReader}
+                trackColor={{ false: '#D1D5DB', true: '#667EEA' }}
+                thumbColor={screenReaderEnabled ? '#FFFFFF' : '#F3F4F6'}
+              />
+            </View>
+          </View>
+          
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>GlycoFlex v1.0.0</Text>
+            <Text style={styles.footerCopyright}>© 2023 GlycoFlex</Text>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#667EEA',
+    backgroundColor: '#F9FAFB',
   },
-  gradient: {
-    flex: 1,
+  headerGradient: {
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  header: {
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 5,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
-    color: '#E0E7FF',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  content: {
+    padding: 16,
   },
   section: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2D3748',
-    marginLeft: 8,
+    color: '#111827',
   },
   sectionDescription: {
     fontSize: 14,
-    color: '#718096',
-    marginBottom: 16,
+    color: '#6B7280',
+    marginBottom: 12,
   },
-  inputGroup: {
-    marginBottom: 16,
+  radioGroup: {
+    marginTop: 12,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#2D3748',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CBD5E0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#2D3748',
-    backgroundColor: '#F7FAFC',
-  },
-  rangeContainer: {
+  radioOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rangeInput: {
-    flex: 1,
-  },
-  rangeSeparator: {
-    fontSize: 18,
-    color: '#718096',
-    marginHorizontal: 16,
-    marginTop: 24,
-  },
-  languageContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  languageButton: {
-    flex: 1,
-    backgroundColor: '#F7FAFC',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  languageButtonActive: {
-    backgroundColor: '#667EEA',
-  },
-  languageText: {
-    fontSize: 14,
-    color: '#4A5568',
-    fontWeight: '500',
-  },
-  languageTextActive: {
-    color: '#FFFFFF',
-  },
-  unitContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  unitButton: {
-    flex: 1,
-    backgroundColor: '#F7FAFC',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  unitButtonActive: {
-    backgroundColor: '#667EEA',
-  },
-  unitText: {
-    fontSize: 14,
-    color: '#4A5568',
-    fontWeight: '500',
-  },
-  unitTextActive: {
-    color: '#FFFFFF',
-  },
-  accessibilityOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-  },
-  optionLeft: {
-    flex: 1,
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: '#2D3748',
-  },
-  toggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 8,
   },
-  toggleLeft: {
-    flex: 1,
-  },
-  toggleLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#2D3748',
-    marginBottom: 4,
-  },
-  toggleDescription: {
-    fontSize: 12,
-    color: '#718096',
-  },
-  infoContainer: {
-    backgroundColor: '#E6FFFA',
+  radioSelected: {
+    backgroundColor: 'rgba(102, 126, 234, 0.05)',
     borderRadius: 8,
-    padding: 16,
+    paddingHorizontal: 8,
   },
-  infoTitle: {
+  radioCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  radioCircleSelected: {
+    borderColor: '#667EEA',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#667EEA',
+  },
+  radioText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#2D3748',
-    marginBottom: 8,
+    color: '#374151',
   },
-  infoText: {
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  settingText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  targetsPreview: {
+    flexDirection: 'row',
+    marginTop: 10,
+    justifyContent: 'space-around',
+  },
+  targetItem: {
+    alignItems: 'center',
+  },
+  targetLabel: {
     fontSize: 14,
-    color: '#4A5568',
+    color: '#6B7280',
     marginBottom: 4,
   },
-  warningText: {
-    fontSize: 12,
-    color: '#FF6B35',
-    marginTop: 8,
-    fontStyle: 'italic',
+  targetValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
   },
-  saveButton: {
+  footer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 4,
+  },
+  footerCopyright: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  authButton: {
     backgroundColor: '#667EEA',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  authButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
   },
-  saveButtonDisabled: {
-    backgroundColor: '#A0AEC0',
-  },
-  saveButtonText: {
+  authButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
     marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  profileButton: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  profileButtonText: {
+    color: '#667EEA',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
-
-export default SettingsScreen;

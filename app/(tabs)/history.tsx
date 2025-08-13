@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, Filter, TrendingUp, Trash2 } from 'lucide-react-native';
-import { getMeasurementsHybrid, removeMeasurementHybrid } from '@/utils/hybridStorage';
+import { SecureHybridStorage } from '@/utils/secureCloudStorage';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import AdvancedChart from '@/components/AdvancedChart';
@@ -24,7 +24,7 @@ function HistoryScreen() {
 
   const loadMeasurements = async () => {
     try {
-      const data = await getMeasurementsHybrid();
+  const data = await SecureHybridStorage.getMeasurements();
       setMeasurements(data);
     } catch (error) {
       Alert.alert('Erreur', 'Impossible de charger l\'historique');
@@ -70,7 +70,7 @@ function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await removeMeasurementHybrid(id);
+              await SecureHybridStorage.deleteMeasurement(id);
               await loadMeasurements();
             } catch (error) {
               Alert.alert('Erreur', 'Impossible de supprimer la mesure');

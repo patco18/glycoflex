@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, TriangleAlert as AlertTriangle, Target } from 'lucide-react-native';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface PredictiveAnalysisProps {
   measurements: GlucoseMeasurement[];
@@ -18,9 +19,13 @@ interface Prediction {
 }
 
 export default function PredictiveAnalysis({ measurements }: PredictiveAnalysisProps) {
+  const { userSettings } = useSettings();
+  const targetMin = parseFloat(userSettings.targetMin) || 70;
+  const targetMax = parseFloat(userSettings.targetMax) || 140;
+  
   const prediction = useMemo(() => {
-    return calculatePrediction(measurements);
-  }, [measurements]);
+    return calculatePrediction(measurements, targetMin, targetMax);
+  }, [measurements, targetMin, targetMax]);
 
   if (measurements.length < 3) {
     return (
@@ -50,11 +55,11 @@ export default function PredictiveAnalysis({ measurements }: PredictiveAnalysisP
   const getTrendColor = () => {
     switch (prediction.trend) {
       case 'increasing':
-        return ['#FF6B35', '#FF8E53'];
+        return ['#FF6B35', '#FF8E53'] as const;
       case 'decreasing':
-        return ['#00D9FF', '#46E4FF'];
+        return ['#00D9FF', '#46E4FF'] as const;
       default:
-        return ['#8B5CF6', '#A78BFA'];
+        return ['#8B5CF6', '#A78BFA'] as const;
     }
   };
 
@@ -102,7 +107,7 @@ export default function PredictiveAnalysis({ measurements }: PredictiveAnalysisP
           <View style={styles.nextValueContainer}>
             <Text style={styles.nextValueLabel}>Prochaine valeur estimée</Text>
             <Text style={styles.nextValue}>
-              {prediction.nextValue.toFixed(0)} mg/dL
+              {prediction.nextValue.toFixed(0)} {userSettings.unit === 'mgdl' ? 'mg/dL' : 'mmol/L'}
             </Text>
           </View>
           
@@ -127,7 +132,11 @@ export default function PredictiveAnalysis({ measurements }: PredictiveAnalysisP
   );
 }
 
-function calculatePrediction(measurements: GlucoseMeasurement[]): Prediction {
+function calculatePrediction(
+  measurements: GlucoseMeasurement[],
+  targetMin: number = 70,
+  targetMax: number = 140
+): Prediction {
   if (measurements.length < 3) {
     return {
       trend: 'stable',
@@ -173,8 +182,8 @@ function calculatePrediction(measurements: GlucoseMeasurement[]): Prediction {
   }
   
   // Évaluation du risque
-  const currentStatus = getGlucoseStatus(values[values.length - 1]);
-  const predictedStatus = getGlucoseStatus(nextValue);
+  const currentStatus = getGlucoseStatus(values[values.length - 1], targetMin, targetMax);
+  const predictedStatus = getGlucoseStatus(nextValue, targetMin, targetMax);
   
   let riskLevel: 'low' | 'medium' | 'high';
   if (predictedStatus !== 'normal' || Math.abs(slope) > 10) {
@@ -187,16 +196,16 @@ function calculatePrediction(measurements: GlucoseMeasurement[]): Prediction {
   
   // Génération de recommandations
   let recommendation: string;
-  if (trend === 'increasing' && nextValue > 140) {
-    recommendation = 'Surveillez votre alimentation et consultez votre médecin si la tendance persiste.';
-  } else if (trend === 'decreasing' && nextValue < 70) {
-    recommendation = 'Préparez des glucides rapides et surveillez les signes d\'hypoglycémie.';
+  if (trend === 'increasing' && nextValue > targetMax) {
+    recommendation = `Surveillez votre alimentation et consultez votre médecin si la tendance persiste. Votre glycémie pourrait dépasser votre objectif maximum de ${targetMax}.`;
+  } else if (trend === 'decreasing' && nextValue < targetMin) {
+    recommendation = `Préparez des glucides rapides et surveillez les signes d'hypoglycémie. Votre glycémie pourrait passer sous votre objectif minimum de ${targetMin}.`;
   } else if (riskLevel === 'high') {
-    recommendation = 'Consultez votre médecin pour ajuster votre traitement.';
+    recommendation = `Consultez votre médecin pour ajuster votre traitement. Vos objectifs personnalisés sont de ${targetMin} à ${targetMax}.`;
   } else if (trend === 'stable') {
-    recommendation = 'Continuez vos bonnes habitudes, votre glycémie est stable.';
+    recommendation = 'Continuez vos bonnes habitudes, votre glycémie est stable dans votre plage cible.';
   } else {
-    recommendation = 'Surveillez l\'évolution et maintenez vos habitudes saines.';
+    recommendation = `Surveillez l'évolution et maintenez vos habitudes saines pour rester dans votre plage cible (${targetMin}-${targetMax}).`;
   }
   
   return {

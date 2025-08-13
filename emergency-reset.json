@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-08-12T14:13:20.948Z",
+  "action": "emergency_reset",
+  "corruptedDocsDeleted": [
+    "1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_17532858029062hnac4mqp",
+    "1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_1754611779542sl2bfk06y",
+    "1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_1754690835915j2ik7fhl0",
+    "1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_175469543215302ywej825",
+    "1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_1754786109398evbrncyd0",
+    "1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_17550000796030c18wkn6w"
+  ],
+  "cacheCleared": true
+}

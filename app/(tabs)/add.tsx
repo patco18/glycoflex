@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, Clock, Activity, Save } from 'lucide-react-native';
+import { Calendar, Clock, Activity, Save, Edit } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { addMeasurementHybrid } from '@/utils/hybridStorage';
+import { StorageManager } from '@/utils/storageManager';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -24,6 +25,53 @@ function AddScreen() {
   const [selectedType, setSelectedType] = useState('fasting');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  
+  // États pour la date et l'heure
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [useCustomDate, setUseCustomDate] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
+
+  // Fonction pour ouvrir le sélecteur de date
+  const showDatePickerModal = () => {
+    setPickerMode('date');
+    setShowDatePicker(true);
+  };
+
+  // Fonction pour ouvrir le sélecteur d'heure
+  const showTimePickerModal = () => {
+    setPickerMode('time');
+    setShowTimePicker(true);
+  };
+  
+  // Fonction pour gérer le changement de date ou d'heure
+  const handleDateTimeChange = (event: any, selectedDateTime?: Date) => {
+    const currentDate = selectedDateTime || selectedDate;
+    
+    // Sur Android, le sélecteur se ferme automatiquement après la sélection
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      setShowTimePicker(false);
+    }
+    
+    if (selectedDateTime) {
+      setSelectedDate(currentDate);
+      setUseCustomDate(true);
+    }
+  };
+  
+  // Fonction pour fermer les modaux (principalement pour iOS)
+  const hidePicker = () => {
+    setShowDatePicker(false);
+    setShowTimePicker(false);
+  };
+
+  // Fonction pour réinitialiser la date et utiliser la date actuelle
+  const resetToCurrentDateTime = () => {
+    setSelectedDate(new Date());
+    setUseCustomDate(false);
+  };
 
   const handleSave = async () => {
     if (!value || isNaN(Number(value))) {
@@ -48,11 +96,11 @@ function AddScreen() {
       const measurement: Omit<GlucoseMeasurement, 'id'> = {
         value: numericValue,
         type: MEASUREMENT_TYPES.find(t => t.id === selectedType)?.label || 'À jeun',
-        timestamp: Date.now(),
+        timestamp: useCustomDate ? selectedDate.getTime() : Date.now(),
         notes: notes.trim() || undefined,
       };
 
-      await addMeasurementHybrid(measurement);
+      await StorageManager.addMeasurement(measurement);
       
       // Notification selon le statut
       const status = getGlucoseStatus(numericValue);
@@ -168,22 +216,130 @@ function AddScreen() {
               />
             </View>
 
-            <View style={styles.timeInfo}>
-              <View style={styles.timeItem}>
-                <Calendar size={16} color="#6B7280" />
-                <Text style={styles.timeText}>
-                  {new Date().toLocaleDateString('fr-FR')}
-                </Text>
+            <View style={styles.timeContainer}>
+              <Text style={styles.label}>{t('add.dateTime')}</Text>
+              
+              <View style={styles.timeInfo}>
+                <TouchableOpacity 
+                  style={[styles.timePickerButton, useCustomDate && styles.timePickerButtonActive]} 
+                  onPress={showDatePickerModal}>
+                  <View style={styles.timeItem}>
+                    <Calendar size={16} color={useCustomDate ? "#667EEA" : "#6B7280"} />
+                    <Text style={[styles.timeText, useCustomDate && styles.timeTextActive]}>
+                      {selectedDate.toLocaleDateString(userSettings.language === 'fr' ? 'fr-FR' : 'en-US')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.timePickerButton, useCustomDate && styles.timePickerButtonActive]} 
+                  onPress={showTimePickerModal}>
+                  <View style={styles.timeItem}>
+                    <Clock size={16} color={useCustomDate ? "#667EEA" : "#6B7280"} />
+                    <Text style={[styles.timeText, useCustomDate && styles.timeTextActive]}>
+                      {selectedDate.toLocaleTimeString(userSettings.language === 'fr' ? 'fr-FR' : 'en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                {useCustomDate && (
+                  <TouchableOpacity
+                    style={styles.resetTimeButton}
+                    onPress={resetToCurrentDateTime}
+                  >
+                    <Text style={styles.resetTimeButtonText}>{t('add.useCurrentTime')}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <View style={styles.timeItem}>
-                <Clock size={16} color="#6B7280" />
-                <Text style={styles.timeText}>
-                  {new Date().toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </Text>
-              </View>
+              
+              {/* DateTimePicker natif pour mobile */}
+              {Platform.OS !== 'web' && (showDatePicker || showTimePicker) && (
+                <DateTimePicker
+                  testID="dateTimePicker"
+                  value={selectedDate}
+                  mode={pickerMode}
+                  is24Hour={userSettings.language === 'fr'} // 24h format pour le français, 12h pour l'anglais
+                  display="default"
+                  onChange={handleDateTimeChange}
+                  maximumDate={new Date()} // Ne pas permettre de dates futures
+                />
+              )}
+              
+              {/* Modaux pour le web */}
+              {Platform.OS === 'web' && showDatePicker && (
+                <Modal
+                  visible={showDatePicker}
+                  transparent={true}
+                  animationType="slide"
+                >
+                  <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                      <Text style={styles.modalTitle}>{t('add.selectDate')}</Text>
+                      <input 
+                        type="date"
+                        style={{fontSize: 16, padding: 10, margin: 10, width: '80%'}}
+                        value={selectedDate.toISOString().split('T')[0]}
+                        max={new Date().toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const [year, month, day] = e.target.value.split('-').map(Number);
+                            const newDate = new Date(selectedDate);
+                            newDate.setFullYear(year);
+                            newDate.setMonth(month - 1);
+                            newDate.setDate(day);
+                            setSelectedDate(newDate);
+                            setUseCustomDate(true);
+                          }
+                        }}
+                      />
+                      <TouchableOpacity 
+                        style={styles.modalButton} 
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={styles.modalButtonText}>{t('common.done')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+              
+              {Platform.OS === 'web' && showTimePicker && (
+                <Modal
+                  visible={showTimePicker}
+                  transparent={true}
+                  animationType="slide"
+                >
+                  <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                      <Text style={styles.modalTitle}>{t('add.selectTime')}</Text>
+                      <input 
+                        type="time"
+                        style={{fontSize: 16, padding: 10, margin: 10, width: '80%'}}
+                        value={`${selectedDate.getHours().toString().padStart(2, '0')}:${selectedDate.getMinutes().toString().padStart(2, '0')}`}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const [hours, minutes] = e.target.value.split(':').map(Number);
+                            const newDate = new Date(selectedDate);
+                            newDate.setHours(hours);
+                            newDate.setMinutes(minutes);
+                            setSelectedDate(newDate);
+                            setUseCustomDate(true);
+                          }
+                        }}
+                      />
+                      <TouchableOpacity 
+                        style={styles.modalButton} 
+                        onPress={() => setShowTimePicker(false)}
+                      >
+                        <Text style={styles.modalButtonText}>{t('common.done')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              )}
             </View>
 
             <TouchableOpacity
@@ -313,11 +469,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7FAFC',
     textAlignVertical: 'top',
   },
+  timeContainer: {
+    marginBottom: 24,
+  },
   timeInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
-    paddingHorizontal: 8,
+    marginBottom: 10,
+    flexWrap: 'wrap',
   },
   timeItem: {
     flexDirection: 'row',
@@ -327,6 +486,120 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#718096',
     marginLeft: 8,
+  },
+  timeTextActive: {
+    color: '#667EEA',
+    fontWeight: '500',
+  },
+  timePickerButton: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E0',
+    backgroundColor: '#F7FAFC',
+    marginRight: 8,
+    marginBottom: 8,
+    minWidth: '45%',
+  },
+  timePickerButtonActive: {
+    borderColor: '#667EEA',
+    backgroundColor: '#EDF2F7',
+  },
+  resetTimeButton: {
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    width: '100%',
+  },
+  resetTimeButtonText: {
+    color: '#667EEA',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  modalButton: {
+    backgroundColor: '#667EEA',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 15,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  dateInputsContainer: {
+    width: '100%',
+    marginVertical: 15,
+  },
+  dateInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  dateLabel: {
+    fontSize: 16,
+    width: '30%',
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#CBD5E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    width: '60%',
+    textAlign: 'center',
+  },
+  timeInputsContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 15,
+  },
+  timeInputRow: {
+    alignItems: 'center',
+  },
+  timeLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  timeInput: {
+    borderWidth: 1,
+    borderColor: '#CBD5E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 18,
+    width: 60,
+    textAlign: 'center',
+  },
+  timeSeparator: {
+    fontSize: 24,
+    marginHorizontal: 10,
+    fontWeight: 'bold',
   },
   saveButton: {
     backgroundColor: '#667EEA',

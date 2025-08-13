@@ -27,11 +27,11 @@ export default function StatsCards({ stats, trend, timeInRange }: StatsCardsProp
   const getTrendColor = () => {
     switch (trend) {
       case 'up':
-        return ['#FF6B35', '#FF8E53'];
+        return ['#FF6B35', '#FF8E53'] as const;
       case 'down':
-        return ['#00D9FF', '#46E4FF'];
+        return ['#00D9FF', '#46E4FF'] as const;
       default:
-        return ['#8B5CF6', '#A78BFA'];
+        return ['#8B5CF6', '#A78BFA'] as const;
     }
   };
 
@@ -96,7 +96,7 @@ export default function StatsCards({ stats, trend, timeInRange }: StatsCardsProp
           </View>
           <Text style={styles.timeInRangeLabel}>Temps dans la cible</Text>
           <Text style={styles.timeInRangeDescription}>
-            Pourcentage de mesures dans la plage normale (70-140 {unitLabel})
+            Pourcentage de mesures dans la plage normale ({userSettings.targetMin}-{userSettings.targetMax} {unitLabel})
           </Text>
         </LinearGradient>
       )}

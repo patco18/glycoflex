@@ -25,7 +25,7 @@ export const getStoredMeasurements = async (): Promise<GlucoseMeasurement[]> => 
   }
 };
 
-export const addMeasurement = async (measurement: Omit<GlucoseMeasurement, 'id'>): Promise<void> => {
+export const addMeasurement = async (measurement: Omit<GlucoseMeasurement, 'id'>): Promise<GlucoseMeasurement> => {
   try {
     const measurements = await getStoredMeasurements();
     const newMeasurement: GlucoseMeasurement = {
@@ -35,6 +35,7 @@ export const addMeasurement = async (measurement: Omit<GlucoseMeasurement, 'id'>
     
     measurements.unshift(newMeasurement);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(measurements));
+    return newMeasurement;
   } catch (error) {
     console.error('Erreur lors de l\'ajout de la mesure:', error);
     throw error;

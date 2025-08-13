@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, TriangleAlert as AlertTriangle, Activity, Sparkles, ChartBar as BarChart3 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { getMeasurementsHybrid } from '@/utils/hybridStorage';
+import { StorageManager } from '@/utils/storageManager';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus, calculateStats, filterMeasurementsByDateRange } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -28,7 +28,7 @@ function HomeScreen() {
 
   const loadMeasurements = async () => {
     try {
-      const data = await getMeasurementsHybrid();
+      const data = await StorageManager.getMeasurements();
       setMeasurements(data);
     } catch (error) {
       Alert.alert('Erreur', 'Impossible de charger les mesures');

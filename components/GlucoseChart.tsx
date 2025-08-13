@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface GlucoseChartProps {
   measurements: GlucoseMeasurement[];
@@ -10,8 +11,13 @@ interface GlucoseChartProps {
 }
 
 export default function GlucoseChart({ measurements, period }: GlucoseChartProps) {
+  const { userSettings } = useSettings();
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = screenWidth - 32;
+  
+  // Obtenir les valeurs cibles de l'utilisateur
+  const targetMin = parseFloat(userSettings.targetMin) || 70;
+  const targetMax = parseFloat(userSettings.targetMax) || 140;
 
   const getChartData = () => {
     if (measurements.length === 0) {
@@ -109,15 +115,15 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
           <View style={styles.legendContainer}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FF3B82' }]} />
-              <Text style={styles.legendText}>Bas (&lt;70)</Text>
+              <Text style={styles.legendText}>Bas (&lt;{targetMin})</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#00D9FF' }]} />
-              <Text style={styles.legendText}>Normal (70-140)</Text>
+              <Text style={styles.legendText}>Normal ({targetMin}-{targetMax})</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FF6B35' }]} />
-              <Text style={styles.legendText}>Élevé (&gt;140)</Text>
+              <Text style={styles.legendText}>Élevé (&gt;{targetMax})</Text>
             </View>
           </View>
         </View>

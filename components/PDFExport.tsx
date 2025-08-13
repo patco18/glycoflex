@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { Share } from 'react-native';
 import { FileText, Download, Share as ShareIcon } from 'lucide-react-native';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { calculateStats, getGlucoseStatus } from '@/utils/glucose';
+import { useSettings } from '@/contexts/SettingsContext';
+import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 interface PDFExportProps {
   measurements: GlucoseMeasurement[];
@@ -11,10 +15,35 @@ interface PDFExportProps {
 
 export default function PDFExport({ measurements }: PDFExportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const { userSettings } = useSettings();
+  const [logoUri, setLogoUri] = useState<string | null>(null);
+
+  // Charger le logo au format base64 pour l'inclure dans le PDF
+  useEffect(() => {
+    const loadLogo = async () => {
+      try {
+        if (Platform.OS === 'web') {
+          // Pour le web, utiliser une URL relative à l'application
+          setLogoUri('/assets/images/icon.png');
+        } else {
+          // Pour mobile, utiliser un logo encodé en base64 directement
+          // Utilisez un logo intégré en base64 pour éviter les problèmes de lecture de fichier
+          // Ceci est une solution temporaire - en production, vous pourriez vouloir précharger l'asset correctement
+          const logoBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAE8UlEQVR4nO2aW2xURRjHf9PdQtGmCgVR5Ga8VINWlLZYQdSAQPFSo/EB0ETjC2rUxEQTnzTGd9/0xTdtQogEL0SCGi+JgVgNKAHcchG00FoKlXazpd3tdr9xzpnD2e7u6XbP2UW6/2Sy2XO+y8z/m/lmzpwtlClTpkyZMmXK5ClK0PJzgQeAW4GZwGRgElCZb/MrsA/YBnwHHAuYQ0kxAVgDfAWcBLwBPF3A+8BLwBdAJn8t07+rFtCnBASBaUAHkKL4wdK6HegtgfucgvO0TLf9ynRL3xk/uVL3g2/DdXuA+cDH/o+Wj5sqDnQAdoiG46Z/ycyWjaInoEm00f4OCUKxUTRbDboIQp+iJU2M/aDGAB8BO9HLHnjFKMUDKgJo0wG2APOALwO0P2I48DHwCHA4CGOKYSj+DlC8JHzyQ3hAMXoDvFlKh+lCaRoW+jVEscsC4FngTr+GDB8aQ+S+0ZP3IcBFKbRWHCRDxR0+6o4BFwclu+SXAeGAHxODcaxYxrPdimXFMlq+LPo2MBZ4H3grAIG7gXVBCA6KCzG+BLKU9WoDjxsUFm+fANfogkwZ2NmqOpt1/FGhtLHc9FWlH/Y1//pKLGuxJGP1xqus/TCKI12ge0VyrgPGSYYWeCCQkJOysAYosvSOLG5TYL+XL45ARqmyR4S5P6WMbXsUx2JaRILuL69lfCLKc+1JniKmK9eFyQF62+8V9lPfmtPkCO3nm3RlozE+asQHCr1TlpNCr76+PUXn2U5a85WLnBCP7T/Mb5akKAnzUKw+cJRnrCRrU11sN5Vhj8h94EnDzG2mdLda6TUOxdLOA7wYchmbwshVxcZEF89kU3TpypA7YGd+JCaj6BB6Gh2KJYcP8nxdcMOmGAYrTvSMs6ZXHBByiKw0JB5xDnB+gmevCLA1JZn2SiHLgQVjyukifWJ8eZCh2HLwEJ+EFLUOxb8yl9M3FqUYqIIIkVNC3jRjvBUCQhhbblHMThznsSBJ5mBepZg+IcrdDsMnz7G36UuEGNI7roiBKz3aPlVvxhetkYwsZngrBI4ZimMJm7srmw5wu1umJ8ZH3acIhdDmmwJG3ZDMrDFSGzz6ujH6azr1uZ6twQ1mjaQzoqhJnuU+p5/nkl20uQx7xQYXxRYhPtIwmFdDTy/trk2LbmL1unK30HjWQTHb6eY5K8ltbs/zal0WFDoMC7MhsE0MVqNDsazvKC9ElNZ+ucYz8SJrF4aTwqBB/3ZTvDMxn+STauJvQqY9KE9QGGtpIzWscyieTHbRLjPvBZ8NEm+L5zbhwafc2vQsJ1KMFcMb9Wj1OBRPuF201cfgXuxvN96I6flM7jdzO9g1s85RA/8vy0sKY2kiOcYay6bVHdvHZlu/uf2TISdkfSE8Kgw9ImSMF3beIvIG2mH3OMaTVLgUa61+PijWaC8OF4RRnXqaapPjrE518WIxk9UrJl2QHcxlwnAJQlR/bG7Sr1T8oK9+0KdiyZUjRn0uIRsNi1UhHacbhEFJ6ZHcvO73OgU8YhhYHZK4SpH3vBD0bkCSfhlQGhFIuALU6WnUEbCwoHkY+EXE3afbfQf0ltAJVmldB3yk9cSdsG2Aa4HntISV+kOJ7MlxHXCjtN8FPK3FDapRimfFU4HPtG4OmlwQaMXDfrffa79yaEVdbSj+C2Kxg5dE9WI1AAAAAElFTkSuQmCC';
+          setLogoUri(`data:image/png;base64,${logoBase64}`);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du logo:', error);
+      }
+    };
+
+    loadLogo();
+  }, []);
 
   const generatePDFContent = () => {
-    const stats = calculateStats(measurements);
+    const stats = calculateStats(measurements, parseFloat(userSettings.targetMin), parseFloat(userSettings.targetMax));
     const now = new Date();
+    const unit = userSettings.unit === 'mgdl' ? 'mg/dL' : 'mmol/L';
     
     // Grouper les mesures par date
     const measurementsByDate = measurements.reduce((groups, measurement) => {
@@ -28,14 +57,37 @@ export default function PDFExport({ measurements }: PDFExportProps) {
 
     // Calculer les statistiques par statut
     const statusCounts = measurements.reduce((counts, m) => {
-      const status = getGlucoseStatus(m.value);
+      const status = getGlucoseStatus(m.value, parseFloat(userSettings.targetMin), parseFloat(userSettings.targetMax));
       counts[status]++;
       return counts;
     }, { low: 0, normal: 0, high: 0 });
 
+    // Construire le contenu du profil utilisateur
+    const profileInfo = `
+INFORMATIONS PATIENT
+Nom: ${userSettings.name || 'Non spécifié'}
+Âge: ${userSettings.age || 'Non spécifié'}
+${userSettings.gender ? `Genre: ${userSettings.gender}` : ''}
+${userSettings.height ? `Taille: ${userSettings.height} cm` : ''}
+${userSettings.weight ? `Poids: ${userSettings.weight} kg` : ''}
+${userSettings.medicalId ? `Numéro Sécu: ${userSettings.medicalId}` : ''}
+${userSettings.doctorName ? `Médecin: ${userSettings.doctorName}` : ''}
+
+${userSettings.medicalConditions && userSettings.medicalConditions.length > 0 ? 
+  `Conditions médicales: ${userSettings.medicalConditions.join(', ')}` : ''}
+${userSettings.medications && userSettings.medications.length > 0 ? 
+  `Médicaments: ${userSettings.medications.join(', ')}` : ''}
+
+Plage cible: ${userSettings.targetMin}-${userSettings.targetMax} ${unit}
+`;
+
     const content = `
-RAPPORT DE SUIVI GLYCÉMIQUE
+RAPPORT DE SUIVI GLYCÉMIQUE - GlycoFlex
 Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')}
+
+═══════════════════════════════════════════════════════════════
+
+${profileInfo}
 
 ═══════════════════════════════════════════════════════════════
 
@@ -47,14 +99,15 @@ Période d'analyse: ${measurements.length > 0 ?
 }
 
 Nombre total de mesures: ${stats.count}
-Glycémie moyenne: ${stats.average.toFixed(1)} mg/dL
-Glycémie minimale: ${stats.min} mg/dL
-Glycémie maximale: ${stats.max} mg/dL
+Glycémie moyenne: ${stats.average.toFixed(1)} ${unit}
+Glycémie minimale: ${stats.min} ${unit}
+Glycémie maximale: ${stats.max} ${unit}
+Temps dans la plage cible: ${stats.timeInRange ? stats.timeInRange.toFixed(1) : 0}%
 
 RÉPARTITION PAR NIVEAU:
-• Hypoglycémie (< 70 mg/dL): ${statusCounts.low} mesures (${((statusCounts.low / stats.count) * 100).toFixed(1)}%)
-• Normal (70-140 mg/dL): ${statusCounts.normal} mesures (${((statusCounts.normal / stats.count) * 100).toFixed(1)}%)
-• Hyperglycémie (> 140 mg/dL): ${statusCounts.high} mesures (${((statusCounts.high / stats.count) * 100).toFixed(1)}%)
+• Hypoglycémie (< ${userSettings.targetMin} ${unit}): ${statusCounts.low} mesures (${((statusCounts.low / stats.count) * 100).toFixed(1)}%)
+• Normal (${userSettings.targetMin}-${userSettings.targetMax} ${unit}): ${statusCounts.normal} mesures (${((statusCounts.normal / stats.count) * 100).toFixed(1)}%)
+• Hyperglycémie (> ${userSettings.targetMax} ${unit}): ${statusCounts.high} mesures (${((statusCounts.high / stats.count) * 100).toFixed(1)}%)
 
 ═══════════════════════════════════════════════════════════════
 
@@ -82,7 +135,7 @@ ${dayMeasurements
     const statusText = status === 'low' ? '[BAS]' : status === 'high' ? '[ÉLEVÉ]' : '[NORMAL]';
     const notes = m.notes ? ` - ${m.notes}` : '';
     
-    return `  ${time} | ${m.value} mg/dL ${statusText} | ${m.type}${notes}`;
+    return `  ${time} | ${m.value} ${unit} ${statusText} | ${m.type}${notes}`;
   }).join('\n')}`;
   }).join('\n\n')}
 
@@ -104,6 +157,98 @@ Date d'export: ${now.toLocaleString('fr-FR')}
     return content;
   };
 
+  const generateHTML = () => {
+    const textContent = generatePDFContent();
+    // Convertir le texte brut en HTML en préservant la mise en forme
+    const htmlContent = textContent
+      .replace(/\n/g, '<br/>')
+      .replace(/ /g, '&nbsp;')
+      .replace(/═+/g, '<hr style="border-top: 2px dashed #667EEA; margin: 20px 0;" />');
+    
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Rapport GlycoFlex</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 40px;
+          line-height: 1.6;
+          color: #333;
+        }
+        .header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        .logo {
+          width: 80px;
+          height: 80px;
+          margin-right: 20px;
+        }
+        .title {
+          font-size: 24px;
+          font-weight: bold;
+          color: #667EEA;
+        }
+        .section {
+          margin-bottom: 30px;
+          padding: 20px;
+          background-color: #f9f9f9;
+          border-radius: 8px;
+        }
+        .section-title {
+          font-size: 18px;
+          font-weight: bold;
+          color: #667EEA;
+          margin-bottom: 10px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        th, td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+        }
+        th {
+          background-color: #f2f2f2;
+        }
+        .footer {
+          margin-top: 40px;
+          font-size: 12px;
+          text-align: center;
+          color: #888;
+        }
+        .disclaimer {
+          font-style: italic;
+          color: #FF6B35;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        ${logoUri ? `<img src="${logoUri}" class="logo" alt="GlycoFlex Logo"/>` : ''}
+        <div class="title">GlycoFlex - Rapport de Suivi Glycémique</div>
+      </div>
+      
+      <div class="content">
+        ${htmlContent}
+      </div>
+      
+      <div class="footer">
+        <p class="disclaimer">⚠️ Ce rapport est à des fins informatives uniquement. Consultez votre médecin pour l'interprétation médicale.</p>
+        <p>GlycoFlex - Application de Suivi Glycémique | ${new Date().toLocaleDateString()}</p>
+      </div>
+    </body>
+    </html>
+    `;
+  };
+
   const handleExport = async () => {
     if (measurements.length === 0) {
       Alert.alert('Aucune donnée', 'Aucune mesure à exporter');
@@ -113,15 +258,14 @@ Date d'export: ${now.toLocaleString('fr-FR')}
     setIsGenerating(true);
     
     try {
-      const content = generatePDFContent();
-      
       if (Platform.OS === 'web') {
-        // Pour le web, créer un fichier texte téléchargeable
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        // Pour le web, générer un PDF ou un fichier texte téléchargeable
+        const htmlContent = generateHTML();
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `rapport-glycemie-${new Date().toISOString().split('T')[0]}.txt`;
+        link.download = `rapport-glycemie-${userSettings.name ? userSettings.name.toLowerCase().replace(/\s+/g, '-') : 'patient'}-${new Date().toISOString().split('T')[0]}.html`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -129,11 +273,23 @@ Date d'export: ${now.toLocaleString('fr-FR')}
         
         Alert.alert('Succès', 'Rapport exporté avec succès');
       } else {
-        // Pour mobile, utiliser le partage natif
-        await Share.share({
-          message: content,
-          title: 'Rapport de suivi glycémique'
-        });
+        // Pour mobile, utiliser expo-print pour générer un PDF
+        const html = generateHTML();
+        const { uri } = await Print.printToFileAsync({ html });
+        
+        if (Platform.OS === 'ios') {
+          await Sharing.shareAsync(uri);
+        } else {
+          const pdfName = `glycoflex-report-${new Date().toISOString().split('T')[0]}.pdf`;
+          const destinationUri = FileSystem.documentDirectory + pdfName;
+          
+          await FileSystem.moveAsync({
+            from: uri,
+            to: destinationUri
+          });
+          
+          await Sharing.shareAsync(destinationUri);
+        }
       }
     } catch (error) {
       console.error('Erreur lors de l\'export:', error);
