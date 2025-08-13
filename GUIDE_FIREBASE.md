@@ -85,6 +85,10 @@ EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=VOTRE_SENDER_ID
 EXPO_PUBLIC_FIREBASE_APP_ID=VOTRE_APP_ID
 ```
 
+Ces variables sont utilisées par `config/firebase.ts`.
+
+Pour la CI/CD, configurez-les via `eas secret` ou GitHub Secrets.
+
 ### Où trouver ces valeurs ?
 Dans Firebase Console > Project Settings > Your apps > Config
 
