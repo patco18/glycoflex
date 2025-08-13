@@ -2,6 +2,12 @@ require('ts-node/register');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const CryptoJS = require('crypto-js');
+
+// Fournit l'implémentation Web Crypto de Node pendant les tests
+if (!global.crypto) {
+  global.crypto = require('node:crypto').webcrypto;
+}
+
 const { SimpleCrypto } = require('../utils/simpleCrypto');
 
 const sample = { foo: 'bar', value: 42 };
