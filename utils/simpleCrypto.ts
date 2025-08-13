@@ -15,6 +15,7 @@ export class SimpleCrypto {
       globalThis.crypto.getRandomValues(array);
       return array;
     }
+
     return getRandomBytes(length);
   }
 
