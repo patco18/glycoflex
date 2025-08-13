@@ -80,6 +80,16 @@ npm run dev
 npm run build:web
 ```
 
+## 🧪 Tests
+
+```bash
+# Exécuter les tests unitaires
+npm test
+
+# Vérifier le lint
+npm run lint
+```
+
 ## 🏗️ Architecture
 
 ### Structure des fichiers
