@@ -64,7 +64,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const scheme = userSettings.theme === 'system' ? systemScheme : userSettings.theme;
   const theme = scheme === 'dark' ? darkTheme : lightTheme;
 
-  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
+  return React.createElement(ThemeContext.Provider, { value: theme }, children);
 };
 
 export const useTheme = () => useContext(ThemeContext);

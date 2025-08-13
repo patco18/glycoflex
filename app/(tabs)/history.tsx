@@ -119,7 +119,7 @@ function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteMeasurement.mutateAsync(id).unwrap();
+              await deleteMeasurement.mutateAsync(id);
             } catch (e) {
               console.error(e);
             }

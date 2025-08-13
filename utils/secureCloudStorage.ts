@@ -9,6 +9,8 @@ import { SimpleCrypto } from './simpleCrypto';
 import { Platform } from 'react-native';
 import CryptoJS from 'crypto-js';
 import * as SecureStore from 'expo-secure-store';
+import { logError } from './logService';
+// La trackCorruptedDocument est importée dynamiquement pour éviter les dépendances circulaires
 
 // Note: Utilisation de SimpleCrypto pour éviter COMPLÈTEMENT les dépendances au module crypto natif
 
@@ -510,6 +512,12 @@ export class SecureCloudStorage {
         } catch (error) {
           // Document corrompu - ne pas l'ajouter aux existingCloudIds
           console.warn(`🚫 Document ${docId} ignoré (corrompu)`);
+          
+          // Utiliser le nouveau système de tracking
+          import('./cleanupTools').then(tools => {
+            tools.trackCorruptedDocument(docId, error);
+          }).catch(e => {/* Ignorer les erreurs de module */});
+          
           return;
         }
 

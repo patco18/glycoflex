@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useCloudSync } from '@/hooks/useCloudSync';
 import { SettingsProvider } from '@/contexts/SettingsContext';
@@ -12,6 +13,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { initializeAppServices } from '@/utils/initServices';
 import { initializeCryptoPolyfills, testCryptoPolyfills } from '@/utils/cryptoInit';
 import { StorageManager } from '@/utils/storageManager';
+import { queryClient } from '@/lib/queryClient';
 import '@/utils/i18n'; // Initialiser i18n
 
 
@@ -78,8 +80,16 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ErrorBoundary>
+          <AuthProvider>
+            <SettingsProvider>
+              <AppContent />
+            </SettingsProvider>
+          </AuthProvider>
+        </ErrorBoundary>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }

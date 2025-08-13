@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Switch, 
+  AccessibilityInfo 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -100,7 +108,7 @@ export default function SettingsScreen() {
     setHighContrast(value);
     await updateAccessibilitySetting('highContrast', value);
     if ((AccessibilityInfo as any).isHighContrastEnabled) {
-      const system = await AccessibilityInfo.isHighContrastEnabled();
+      const system = await AccessibilityInfo.isHighTextContrastEnabled();
       console.log('High contrast system:', system);
     }
   };
@@ -230,6 +238,24 @@ export default function SettingsScreen() {
           {/* Emergency Cleanup Section */}
           {user && (
             <EmergencyCleanup />
+          )}
+          
+          {/* Corrupted Documents Manager */}
+          {user && (
+            <TouchableOpacity 
+              style={styles.section} 
+              onPress={() => router.push('/corrupted-documents')}
+            >
+              <View style={styles.sectionHeader}>
+                <View style={styles.iconContainer}>
+                  <Database size={24} color="#F56565" />
+                </View>
+                <Text style={[styles.sectionTitle, { color: '#F56565' }]}>Documents Corrompus</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                Gérer les documents corrompus détectés lors de la synchronisation.
+              </Text>
+            </TouchableOpacity>
           )}
           
           {/* Cloud Backup Section */}

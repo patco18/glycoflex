@@ -1,16 +1,18 @@
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from 'sentry-expo';
 
 export function initLogService(dsn?: string) {
   Sentry.init({
     dsn,
+    enableInExpoDevelopment: true,
+    debug: __DEV__, // If `true`, Sentry will try to print out useful debugging information
     tracesSampleRate: 1.0
   });
 }
 
 export function logError(error: unknown) {
-  Sentry.captureException(error);
+  Sentry.Native.captureException(error);
 }
 
 export function logMessage(message: string) {
-  Sentry.captureMessage(message);
+  Sentry.Native.captureMessage(message);
 }

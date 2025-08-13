@@ -15,6 +15,7 @@ import StatsCards from '@/components/StatsCards';
 import { useMeasurements } from '@/hooks/useMeasurements';
 import { useToast } from '@/hooks/useToast';
 import { useTheme } from '@/theme';
+import type { GlucoseMeasurement } from '@/utils/storage';
 
 
 function HomeScreen() {
@@ -44,7 +45,7 @@ function HomeScreen() {
 
   const calculateTimeInRange = () => {
     if (measurements.length === 0) return 0;
-    const inRange = measurements.filter(m => {
+    const inRange = measurements.filter((m: GlucoseMeasurement) => {
       const status = getGlucoseStatus(m.value);
       return status === 'normal';
     }).length;
@@ -59,8 +60,8 @@ function HomeScreen() {
     
     if (recent.length === 0 || older.length === 0) return 'stable';
     
-    const recentAvg = recent.reduce((sum, m) => sum + m.value, 0) / recent.length;
-    const olderAvg = older.reduce((sum, m) => sum + m.value, 0) / older.length;
+    const recentAvg = recent.reduce((sum: number, m: GlucoseMeasurement) => sum + m.value, 0) / recent.length;
+    const olderAvg = older.reduce((sum: number, m: GlucoseMeasurement) => sum + m.value, 0) / older.length;
     
     const diff = recentAvg - olderAvg;
     if (diff > 10) return 'up';
@@ -116,7 +117,7 @@ function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, getHighContrastStyles(highContrast)]}>
       <LinearGradient
-
+        colors={['#667EEA', '#764BA2', '#F093FB']}
         style={styles.gradient}
       >
         <ScrollView
@@ -165,7 +166,14 @@ function HomeScreen() {
                 {getTrendIcon()}
               </View>
               <View style={styles.currentValueContainer}>
-
+                <Text
+                  style={[
+                    styles.currentValue,
+                    { color: getStatusColor(latestMeasurement.value) },
+                    getHighContrastStyles(highContrast),
+                    getLargeTextStyles(largeText, 48),
+                  ]}
+                >
                   {latestMeasurement.value}
                 </Text>
                 <Text
@@ -200,7 +208,7 @@ function HomeScreen() {
           ) : (
             <View style={[styles.emptyCard, getHighContrastStyles(highContrast)]}>
               <LinearGradient
-
+                colors={['#667EEA', '#764BA2', '#F093FB']}
                 style={styles.emptyIconContainer}
               >
                 <AlertTriangle size={48} color={colors.white} />
@@ -290,10 +298,17 @@ function HomeScreen() {
             >
               {t('home.recentMeasurements')}
             </Text>
-            {measurements.slice(0, 5).map((measurement, index) => (
+            {measurements.slice(0, 5).map((measurement: GlucoseMeasurement, index: number) => (
               <View key={measurement.id} style={styles.recentItem}>
                 <View style={styles.recentLeft}>
-
+                  <Text
+                    style={[
+                      styles.recentValue,
+                      { color: getStatusColor(measurement.value) },
+                      getHighContrastStyles(highContrast),
+                      getLargeTextStyles(largeText, 16),
+                    ]}
+                  >
                     {measurement.value} mg/dL
                   </Text>
                   <Text
