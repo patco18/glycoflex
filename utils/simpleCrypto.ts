@@ -9,11 +9,16 @@ export class SimpleCrypto {
    * Génère des octets aléatoires en utilisant un générateur cryptographiquement sûr
    */
   private static getSecureBytes(length: number): Uint8Array {
+    if (globalThis.crypto?.getRandomValues) {
+      const array = new Uint8Array(length);
+      globalThis.crypto.getRandomValues(array);
+      return array;
+    }
     try {
-      const { getRandomBytes } = eval('require')( 'expo-random');
+      const { getRandomBytes } = require('expo-random');
       return getRandomBytes(length);
     } catch {
-      const { randomBytes } = eval('require')('crypto');
+      const { randomBytes } = require('crypto');
       return new Uint8Array(randomBytes(length));
     }
   }
