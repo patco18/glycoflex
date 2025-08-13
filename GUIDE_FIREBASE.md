@@ -73,18 +73,16 @@ service cloud.firestore {
 
 ## 5. Mettre à jour la configuration
 
-### Remplacer les clés dans firebase.ts
-Ouvrez `config/firebase.ts` et remplacez les valeurs de `firebaseConfig` avec celles de votre projet :
+### Configurer les variables d'environnement
+Créez un fichier `.env` à la racine et ajoutez :
 
-```typescript
-const firebaseConfig = {
-  apiKey: "VOTRE_API_KEY",
-  authDomain: "VOTRE_PROJECT_ID.firebaseapp.com",
-  projectId: "VOTRE_PROJECT_ID",
-  storageBucket: "VOTRE_PROJECT_ID.appspot.com",
-  messagingSenderId: "VOTRE_SENDER_ID",
-  appId: "VOTRE_APP_ID"
-};
+```
+EXPO_PUBLIC_FIREBASE_API_KEY=VOTRE_API_KEY
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=VOTRE_PROJECT_ID.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=VOTRE_PROJECT_ID
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=VOTRE_PROJECT_ID.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=VOTRE_SENDER_ID
+EXPO_PUBLIC_FIREBASE_APP_ID=VOTRE_APP_ID
 ```
 
 ### Où trouver ces valeurs ?

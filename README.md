@@ -42,19 +42,18 @@ Une application mobile moderne pour le suivi de la glycémie avec synchronisatio
 4. Configurez les règles de sécurité
 
 ### 2. Configuration de l'application
-1. Copiez votre configuration Firebase
-2. Remplacez les valeurs dans `config/firebase.ts`:
+1. Créez un fichier `.env` à la racine et ajoutez votre configuration Firebase :
 
-```typescript
-const firebaseConfig = {
-  apiKey: "votre-api-key",
-  authDomain: "votre-projet.firebaseapp.com",
-  projectId: "votre-projet-id",
-  storageBucket: "votre-projet.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "votre-app-id"
-};
 ```
+EXPO_PUBLIC_FIREBASE_API_KEY=votre-api-key
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=votre-projet.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=votre-projet-id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=votre-projet.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+EXPO_PUBLIC_FIREBASE_APP_ID=votre-app-id
+```
+
+Les valeurs seront automatiquement lues par `config/firebase.ts`.
 
 ### 3. Règles Firestore
 ```javascript
