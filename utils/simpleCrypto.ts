@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import { getRandomBytes } from 'expo-random';
 
 /**
  * Service de chiffrement compatible avec React Native - VERSION SANS MODULE CRYPTO NATIF
@@ -15,7 +16,6 @@ export class SimpleCrypto {
       return array;
     }
 
-    const { getRandomBytes } = require('expo-random');
     return getRandomBytes(length);
   }
 
