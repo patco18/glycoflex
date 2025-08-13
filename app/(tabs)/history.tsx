@@ -3,37 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, TrendingUp, Trash2 } from 'lucide-react-native';
-import { SecureHybridStorage } from '@/utils/secureCloudStorage';
-import { GlucoseMeasurement } from '@/utils/storage';
-import { getGlucoseStatus } from '@/utils/glucose';
-import AdvancedChart from '@/components/AdvancedChart';
-import { useToast } from '@/hooks/useToast';
+
 
 function HistoryScreen() {
-  const [measurements, setMeasurements] = useState<GlucoseMeasurement[]>([]);
+  const { data: measurements = [], isLoading, error } = useMeasurements();
+  const deleteMeasurement = useDeleteMeasurement();
   const [filteredMeasurements, setFilteredMeasurements] = useState<GlucoseMeasurement[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [loading, setLoading] = useState(true);
-  const toast = useToast();
+
 
   useEffect(() => {
-    loadMeasurements();
-  }, []);
+    if (error) {
+      Alert.alert('Erreur', "Impossible de charger l'historique");
+    }
+  }, [error]);
 
   useEffect(() => {
     filterMeasurements();
   }, [measurements, selectedFilter]);
 
-  const loadMeasurements = async () => {
-    try {
-  const data = await SecureHybridStorage.getMeasurements();
-      setMeasurements(data);
-    } catch (error) {
-      toast.show('Erreur', "Impossible de charger l'historique");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filterMeasurements = () => {
     const now = new Date();
@@ -61,8 +49,7 @@ function HistoryScreen() {
     setFilteredMeasurements(filtered);
   };
 
-  const handleDeleteMeasurement = async (id: string) => {
-    toast.show(
+
       'Supprimer la mesure',
       'Êtes-vous sûr de vouloir supprimer cette mesure ?',
       [
@@ -72,13 +59,10 @@ function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await SecureHybridStorage.deleteMeasurement(id);
-              await loadMeasurements();
-            } catch (error) {
-              toast.show('Erreur', 'Impossible de supprimer la mesure');
+
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -110,56 +94,7 @@ function HistoryScreen() {
     { id: 'month', label: '30 jours' },
   ];
 
-  const renderItem = ({ item: measurement }: { item: GlucoseMeasurement }) => (
-    <View style={styles.measurementCard}>
-      <View style={styles.measurementHeader}>
-        <View style={styles.measurementLeft}>
-          <Text style={[styles.measurementValue, { color: getStatusColor(measurement.value) }]}>
-            {measurement.value} mg/dL
-          </Text>
-          <Text style={styles.measurementType}>
-            {measurement.type}
-          </Text>
-        </View>
-        <View style={styles.measurementRight}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(measurement.value) + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(measurement.value) }]}> 
-              {getStatusText(measurement.value)}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDeleteMeasurement(measurement.id)}
-          >
-            <Trash2 size={16} color="#DC2626" />
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      <View style={styles.measurementFooter}>
-        <View style={styles.timeContainer}>
-          <Calendar size={14} color="#6B7280" />
-          <Text style={styles.timeText}>
-            {new Date(measurement.timestamp).toLocaleDateString('fr-FR')}
-          </Text>
-          <Text style={styles.timeText}>
-            {new Date(measurement.timestamp).toLocaleTimeString('fr-FR', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Text>
-        </View>
-      </View>
-
-      {measurement.notes && (
-        <View style={styles.notesContainer}>
-          <Text style={styles.notesText}>{measurement.notes}</Text>
-        </View>
-      )}
-    </View>
-  );
-
-  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
