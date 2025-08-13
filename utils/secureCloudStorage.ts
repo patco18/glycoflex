@@ -28,16 +28,6 @@ const CIRCUIT_BREAKER_KEY = 'corruption_circuit_breaker_v1';
 const CIRCUIT_BREAKER_RESET_TIME = 30 * 60 * 1000; // 30 minutes
 const MAX_CORRUPTION_ATTEMPTS = 5;
 
-// Documents corrompus identifiés à ignorer complètement
-const KNOWN_CORRUPTED_DOC_IDS = [
-  '1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_17532858029062hnac4mqp',
-  '1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_1754611779542sl2bfk06y',
-  '1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_1754690835915j2ik7fhl0',
-  '1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_175469543215302ywej825',
-  '1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_1754786109398evbrncyd0',
-  '1kDJt1PYkBUdhdDnaQOQKlDE3Xx2_17550000796030c18wkn6w'
-];
-
 // Collections Firestore
 const MEASUREMENTS_COLLECTION = 'encrypted_measurements';
 const SYNC_METADATA_COLLECTION = 'sync_metadata';
@@ -393,7 +383,18 @@ export class SecureCloudStorage {
         // Vérifier si le document existant est corrompu
         const existingData = existingDoc.data();
         let isCorrupted = false;
-        
+
+        if (existingData?.integrityHash) {
+          try {
+            const currentHash = CryptoJS.SHA256(existingData.encryptedData || '').toString();
+            if (currentHash !== existingData.integrityHash) {
+              isCorrupted = true;
+            }
+          } catch {
+            isCorrupted = true;
+          }
+        }
+
         if (!existingData?.encryptedData || existingData.encryptedData === 'CORRUPTED_DATA_FLAGGED') {
           isCorrupted = true;
         } else {
@@ -404,25 +405,10 @@ export class SecureCloudStorage {
             isCorrupted = true;
           }
         }
-        
+
         if (isCorrupted) {
           console.log(`🔧 Document ${docId} corrompu détecté, écrasement forcé`);
-          
-          // Vérifier si c'est un document connu comme problématique
-          if (KNOWN_CORRUPTED_DOC_IDS.includes(docId)) {
-            console.log(`🚫 Document ${docId} dans la liste noire, suppression plutôt qu'écrasement`);
-            
-            // Activer le circuit breaker même pour les suppressions
-            const circuitOpen = await CorruptionCircuitBreaker.recordCorruption(docId);
-            if (circuitOpen) {
-              console.log(`🚨 Circuit breaker ouvert après détection liste noire`);
-              throw new Error('Circuit breaker activé - document dans liste noire détecté');
-            }
-            
-            await deleteDoc(doc(db, MEASUREMENTS_COLLECTION, docId));
-            throw new Error(`Document corrompu ${docId} supprimé, ré-essayez`);
-          }
-          
+
           // Enregistrer la corruption dans le circuit breaker
           const circuitOpen = await CorruptionCircuitBreaker.recordCorruption(docId);
           if (circuitOpen) {
@@ -434,7 +420,7 @@ export class SecureCloudStorage {
           return measurement;
         }
       }
-      
+
       // Ajouter des métadonnées d'appareil et d'horodatage
       const enhancedMeasurement = {
         ...measurement,
@@ -442,15 +428,17 @@ export class SecureCloudStorage {
         deviceId,
         version: 1 // Pour la résolution des conflits
       };
-      
+
       // Chiffrer les données
       const encryptedData = EncryptionService.encrypt(enhancedMeasurement);
-      
+      const integrityHash = CryptoJS.SHA256(encryptedData).toString();
+
       // Stocker dans Firestore avec métadonnées minimales pour recherche
       await setDoc(doc(db, MEASUREMENTS_COLLECTION, docId), {
         userId,
         measurementId: measurement.id,
         encryptedData,
+        integrityHash,
         timestamp: measurement.timestamp, // Non chiffré pour les requêtes
         lastModified: Date.now()
       });
@@ -539,7 +527,37 @@ export class SecureCloudStorage {
         if (!data.encryptedData || data.encryptedData === 'CORRUPTED_DATA_FLAGGED') {
           return; // Document sans données valides
         }
-        
+
+        if (data.integrityHash) {
+          const computedHash = CryptoJS.SHA256(data.encryptedData || '').toString();
+          if (computedHash !== data.integrityHash) {
+            if (!this.corruptedDocIds.has(docId) && !this.ignoredCorruptedIds.has(docId)) {
+              console.debug(`📄 Document ${docId} - hash d'intégrité invalide`);
+              this.corruptedDocIds.add(docId);
+              try {
+                if (data?.userId === userId) {
+                  await setDoc(doc.ref, {
+                    ...data,
+                    isCorrupted: true,
+                    corruptionDetectedAt: Date.now(),
+                    corruptionReason: 'Integrity hash mismatch'
+                  }, { merge: true });
+                  console.log(`🏷️ Document marqué isCorrupted: ${docId}`);
+                } else {
+                  throw new Error('userId mismatch - unable to mark as corrupted');
+                }
+              } catch (markErr) {
+                this.ignoredCorruptedIds.add(docId);
+                try {
+                  await AsyncStorage.setItem(CORRUPTED_IGNORE_KEY, JSON.stringify(Array.from(this.ignoredCorruptedIds)));
+                } catch {}
+                console.warn(`🚫 Document ${docId} ajouté à la liste ignore (raison: ${(markErr as any)?.message || markErr})`);
+              }
+            }
+            return;
+          }
+        }
+
         // Déchiffrer les données avec gestion d'erreur améliorée
         try {
           const tryAny = EncryptionService.tryDecryptWithAnyKey(data.encryptedData);
@@ -1276,13 +1294,8 @@ export class SecureHybridStorage {
             // ou si c'est une tentative de récupération après correction
             console.warn(`⚠️ Mesure ${measurement.id} existe dans le cloud mais non déchiffrable`);
             
-            // Vérifier si c'est un document connu comme problématique
             const docId = `${userId}_${measurement.id}`;
-            if (KNOWN_CORRUPTED_DOC_IDS.includes(docId)) {
-              console.log(`🚫 Document ${docId} dans la liste noire, ignorer complètement`);
-              return; // Ignorer cette mesure
-            }
-            
+
             // Enregistrer la corruption dans le circuit breaker
             const circuitOpen = await CorruptionCircuitBreaker.recordCorruption(docId);
             if (circuitOpen) {
