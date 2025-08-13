@@ -6,16 +6,15 @@ import { Platform } from 'react-native';
 
 // 🔥 CONFIGURATION FIREBASE
 // =========================
-// TODO: Remplacez par votre vraie configuration Firebase
-// Obtenez ces valeurs depuis Firebase Console > Project Settings > Your apps
-
+// Les valeurs sont lues depuis les variables d'environnement.
+// Assurez-vous de définir ces variables dans un fichier `.env` (préfixe EXPO_PUBLIC_).
 const firebaseConfig = {
-  apiKey: "AIzaSyBJVgQ0mc2TLR1i3Fe9BH7n0weo89uUDAM",
-  authDomain: "glycoflex-app.firebaseapp.com",
-  projectId: "glycoflex-app",
-  storageBucket: "glycoflex-app.firebasestorage.app",
-  messagingSenderId: "906933577031",
-  appId: "1:906933577031:web:ea1d777562c4bcadb89862"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY!,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID!,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!
 };
 
 // Initialiser Firebase
@@ -26,21 +25,6 @@ export const db = getFirestore(app);
 
 // Initialiser Auth avec gestion d'erreur
 let auth: any;
-
-// Désactiver tous les avertissements de Firebase Auth pour une meilleure expérience
-const originalConsoleWarn = console.warn;
-console.warn = function(msg: any, ...args: any[]) {
-  // Ignorer les avertissements de Firebase Auth
-  if (typeof msg === 'string' && 
-      ((msg.includes('AsyncStorage') && msg.includes('Firebase Auth')) ||
-       (msg.includes('@firebase/auth') && msg.includes('persistence')) ||
-       (msg.includes('You are initializing Firebase Auth')) ||
-       (msg.includes('Auth state will default to memory persistence')))) {
-    // Avertissements filtrés pour une meilleure lisibilité de la console
-    return;
-  }
-  originalConsoleWarn.apply(console, [msg, ...args]);
-};
 
 try {
   if (Platform.OS === 'web') {
