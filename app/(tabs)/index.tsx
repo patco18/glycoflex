@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, TrendingDown, TriangleAlert as AlertTriangle, Activity, Sparkles, ChartBar as BarChart3 } from 'lucide-react-native';
@@ -13,7 +13,7 @@ import PredictiveAnalysis from '@/components/PredictiveAnalysis';
 import ComparisonAnalysis from '@/components/ComparisonAnalysis';
 import PDFExport from '@/components/PDFExport';
 import StatsCards from '@/components/StatsCards';
-import { useTheme } from '@/theme';
+
 
 function HomeScreen() {
   const { t } = useTranslation();
@@ -24,6 +24,7 @@ function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
+  const toast = useToast();
 
   useEffect(() => {
     loadMeasurements();
@@ -34,7 +35,7 @@ function HomeScreen() {
       const data = await StorageManager.getMeasurements();
       setMeasurements(data);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les mesures');
+      toast.show('Erreur', 'Impossible de charger les mesures');
     } finally {
       setLoading(false);
       setRefreshing(false);

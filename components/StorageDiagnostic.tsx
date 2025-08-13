@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Database, Cloud, AlertTriangle, CheckCircle, RefreshCw, Trash2, Upload, Shield } from 'lucide-react-native';
 import { StorageManager } from '@/utils/storageManager';
@@ -8,6 +8,7 @@ import { markProblematicDocumentsAsCorrupted } from '@/utils/cleanupTools';
 import { SyncDiagnostic } from '@/utils/syncDiagnostic';
 import { useAuth } from '@/contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useToast } from '@/hooks/useToast';
 
 interface StorageStats {
   localCount: number;
@@ -32,6 +33,7 @@ export default function StorageDiagnostic() {
   const [diagnostic, setDiagnostic] = useState<DiagnosticInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const toast = useToast();
 
   useEffect(() => {
     loadDiagnosticData();
@@ -83,7 +85,7 @@ export default function StorageDiagnostic() {
       setDiagnostic(diagInfo);
     } catch (error) {
       console.error('Erreur chargement diagnostic:', error);
-      Alert.alert('Erreur', 'Impossible de charger les données de diagnostic');
+      toast.show('Erreur', 'Impossible de charger les données de diagnostic');
     } finally {
       setLoading(false);
     }
@@ -91,18 +93,18 @@ export default function StorageDiagnostic() {
 
   const handleForceSync = async () => {
     if (!user) {
-      Alert.alert('Erreur', 'Vous devez être connecté pour synchroniser');
+      toast.show('Erreur', 'Vous devez être connecté pour synchroniser');
       return;
     }
 
     setActionInProgress('sync');
     try {
       await StorageManager.forceSyncNow();
-      Alert.alert('Succès', 'Synchronisation terminée avec succès');
+      toast.show('Succès', 'Synchronisation terminée avec succès');
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur sync forcée:', error);
-      Alert.alert('Erreur', 'Échec de la synchronisation');
+      toast.show('Erreur', 'Échec de la synchronisation');
     } finally {
       setActionInProgress(null);
     }
@@ -110,11 +112,11 @@ export default function StorageDiagnostic() {
 
   const handleCleanupCorrupted = async () => {
     if (!user) {
-      Alert.alert('Erreur', 'Vous devez être connecté pour nettoyer');
+      toast.show('Erreur', 'Vous devez être connecté pour nettoyer');
       return;
     }
 
-    Alert.alert(
+    toast.show(
       'Confirmation',
       'Voulez-vous marquer les documents corrompus pour nettoyage ?',
       [
@@ -128,11 +130,11 @@ export default function StorageDiagnostic() {
     setActionInProgress('cleanup');
     try {
       await markProblematicDocumentsAsCorrupted();
-      Alert.alert('Succès', 'Documents corrompus marqués pour nettoyage');
+      toast.show('Succès', 'Documents corrompus marqués pour nettoyage');
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur nettoyage:', error);
-      Alert.alert('Erreur', 'Échec du nettoyage des documents corrompus');
+      toast.show('Erreur', 'Échec du nettoyage des documents corrompus');
     } finally {
       setActionInProgress(null);
     }
@@ -154,11 +156,11 @@ export default function StorageDiagnostic() {
         message += `\nProblèmes détectés:\n• ${fullDiagnostic.issues.join('\n• ')}`;
       }
       
-      Alert.alert('Diagnostic Complet', message);
+      toast.show('Diagnostic Complet', message);
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur diagnostic complet:', error);
-      Alert.alert('Erreur', 'Échec du diagnostic complet');
+      toast.show('Erreur', 'Échec du diagnostic complet');
     } finally {
       setActionInProgress(null);
     }
@@ -166,27 +168,27 @@ export default function StorageDiagnostic() {
 
   const handleForceSyncLocal = async () => {
     if (!user) {
-      Alert.alert('Erreur', 'Vous devez être connecté pour synchroniser');
+      toast.show('Erreur', 'Vous devez être connecté pour synchroniser');
       return;
     }
 
     setActionInProgress('force-sync-local');
     try {
       await SyncDiagnostic.forceSyncLocalToCloud();
-      Alert.alert('Succès', 'Synchronisation forcée des données locales terminée');
+      toast.show('Succès', 'Synchronisation forcée des données locales terminée');
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur force sync local:', error);
-      Alert.alert('Erreur', 'Échec de la synchronisation forcée');
+      toast.show('Erreur', 'Échec de la synchronisation forcée');
     } finally {
       setActionInProgress(null);
     }
   };
 
   const handleResetStorage = async () => {
-    Alert.alert(
+    toast.show(
       'Attention !',
-      'Cette action va réinitialiser complètement le stockage. Tous les logs d\'erreur seront effacés.',
+      "Cette action va réinitialiser complètement le stockage. Tous les logs d'erreur seront effacés.",
       [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Réinitialiser', style: 'destructive', onPress: performReset }
@@ -197,7 +199,7 @@ export default function StorageDiagnostic() {
   const handleUnblockUploads = async () => {
     console.log('🚨 BOUTON DÉBLOQUER UPLOADS CLIQUÉ !');
     if (!user) {
-      Alert.alert('Erreur', 'Vous devez être connecté pour débloquer les uploads');
+      toast.show('Erreur', 'Vous devez être connecté pour débloquer les uploads');
       return;
     }
 
@@ -214,16 +216,16 @@ export default function StorageDiagnostic() {
       // Essayer la synchronisation
       try {
         await StorageManager.forceSyncNow();
-        Alert.alert('Succès', 'Uploads débloqués et synchronisation lancée');
+        toast.show('Succès', 'Uploads débloqués et synchronisation lancée');
       } catch (syncError) {
         console.warn('Sync échouée après nettoyage:', syncError);
-        Alert.alert('Info', 'Nettoyage effectué. Redémarrez l\'app pour finaliser.');
+        toast.show('Info', "Nettoyage effectué. Redémarrez l'app pour finaliser.");
       }
       
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur déblocage uploads:', error);
-      Alert.alert('Erreur', 'Échec du déblocage: ' + String(error));
+      toast.show('Erreur', 'Échec du déblocage: ' + String(error));
     } finally {
       setActionInProgress(null);
     }
@@ -233,11 +235,11 @@ export default function StorageDiagnostic() {
     setActionInProgress('circuit-reset');
     try {
       await CorruptionCircuitBreaker.reset();
-      Alert.alert('Succès', 'Circuit breaker réinitialisé avec succès');
+      toast.show('Succès', 'Circuit breaker réinitialisé avec succès');
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur reset circuit breaker:', error);
-      Alert.alert('Erreur', 'Échec du reset: ' + String(error));
+      toast.show('Erreur', 'Échec du reset: ' + String(error));
     } finally {
       setActionInProgress(null);
     }
@@ -248,11 +250,11 @@ export default function StorageDiagnostic() {
     try {
       await StorageManager.cleanup();
       await SyncDiagnostic.cleanupSyncData();
-      Alert.alert('Succès', 'Stockage réinitialisé avec succès');
+      toast.show('Succès', 'Stockage réinitialisé avec succès');
       await loadDiagnosticData();
     } catch (error) {
       console.error('Erreur reset:', error);
-      Alert.alert('Erreur', 'Échec de la réinitialisation');
+      toast.show('Erreur', 'Échec de la réinitialisation');
     } finally {
       setActionInProgress(null);
     }

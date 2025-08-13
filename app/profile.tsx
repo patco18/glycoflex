@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,15 +14,17 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, Mail, Calendar, Shield, Trash2 } from 'lucide-react-native';
 import { deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { useToast } from '@/hooks/useToast';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    toast.show(
       t('profile.deleteAccount'),
       t('profile.deleteAccountWarning'),
       [
@@ -48,7 +49,7 @@ export default function ProfileScreen() {
       // Note: Pour la suppression de compte, il faut généralement re-authentifier l'utilisateur
       // Ici, nous allons simplement supprimer le compte directement
       await deleteUser(user);
-      Alert.alert(
+      toast.show(
         t('profile.accountDeleted'),
         t('profile.accountDeletedMessage'),
         [
@@ -62,7 +63,7 @@ export default function ProfileScreen() {
       console.error('Erreur lors de la suppression du compte:', error);
       
       if (error.code === 'auth/requires-recent-login') {
-        Alert.alert(
+        toast.show(
           t('profile.recentLoginRequired'),
           t('profile.recentLoginRequiredMessage'),
           [
@@ -80,7 +81,7 @@ export default function ProfileScreen() {
           ]
         );
       } else {
-        Alert.alert(
+        toast.show(
           t('common.error'),
           t('profile.deleteAccountError')
         );

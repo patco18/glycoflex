@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
@@ -20,6 +19,7 @@ import {
   User 
 } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+import { useToast } from '@/hooks/useToast';
 
 type AuthMode = 'login' | 'register' | 'reset';
 
@@ -31,6 +31,7 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
+  const toast = useToast();
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,19 +44,19 @@ export default function AuthScreen() {
 
   const handleLogin = async () => {
     if (!validateEmail(email)) {
-      Alert.alert(t('auth.error'), t('auth.invalidEmail'));
+      toast.show(t('auth.error'), t('auth.invalidEmail'));
       return;
     }
 
     if (!validatePassword(password)) {
-      Alert.alert(t('auth.error'), t('auth.passwordTooShort'));
+      toast.show(t('auth.error'), t('auth.passwordTooShort'));
       return;
     }
 
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert(t('auth.success'), t('auth.loginSuccess'));
+      toast.show(t('auth.success'), t('auth.loginSuccess'));
       router.replace('/(tabs)');
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
@@ -78,7 +79,7 @@ export default function AuthScreen() {
           errorMessage = `${t('auth.loginError')}: ${error.message}`;
       }
       
-      Alert.alert(t('auth.error'), errorMessage);
+      toast.show(t('auth.error'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -86,24 +87,24 @@ export default function AuthScreen() {
 
   const handleRegister = async () => {
     if (!validateEmail(email)) {
-      Alert.alert(t('auth.error'), t('auth.invalidEmail'));
+      toast.show(t('auth.error'), t('auth.invalidEmail'));
       return;
     }
 
     if (!validatePassword(password)) {
-      Alert.alert(t('auth.error'), t('auth.passwordTooShort'));
+      toast.show(t('auth.error'), t('auth.passwordTooShort'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert(t('auth.error'), t('auth.passwordMismatch'));
+      toast.show(t('auth.error'), t('auth.passwordMismatch'));
       return;
     }
 
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert(t('auth.success'), t('auth.registerSuccess'));
+      toast.show(t('auth.success'), t('auth.registerSuccess'));
       router.replace('/(tabs)');
     } catch (error: any) {
       console.error('Erreur de création de compte:', error);
@@ -123,7 +124,7 @@ export default function AuthScreen() {
           errorMessage = `${t('auth.registerError')}: ${error.message}`;
       }
       
-      Alert.alert(t('auth.error'), errorMessage);
+      toast.show(t('auth.error'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -131,18 +132,18 @@ export default function AuthScreen() {
 
   const handlePasswordReset = async () => {
     if (!validateEmail(email)) {
-      Alert.alert(t('auth.error'), t('auth.invalidEmail'));
+      toast.show(t('auth.error'), t('auth.invalidEmail'));
       return;
     }
 
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
-      Alert.alert(t('auth.success'), t('auth.passwordResetSent'));
+      toast.show(t('auth.success'), t('auth.passwordResetSent'));
       setMode('login');
     } catch (error: any) {
       console.error('Erreur de réinitialisation:', error);
-      Alert.alert(t('auth.error'), t('auth.passwordResetError'));
+      toast.show(t('auth.error'), t('auth.passwordResetError'));
     } finally {
       setLoading(false);
     }
