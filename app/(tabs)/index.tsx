@@ -8,6 +8,7 @@ import { StorageManager } from '@/utils/storageManager';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus, calculateStats, filterMeasurementsByDateRange } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useHighContrast, useLargeText, getHighContrastStyles, getLargeTextStyles } from '@/utils/accessibility';
 import AdvancedChart from '@/components/AdvancedChart';
 import PredictiveAnalysis from '@/components/PredictiveAnalysis';
 import ComparisonAnalysis from '@/components/ComparisonAnalysis';
@@ -17,6 +18,8 @@ import StatsCards from '@/components/StatsCards';
 function HomeScreen() {
   const { t } = useTranslation();
   const { userSettings } = useSettings();
+  const highContrast = useHighContrast();
+  const largeText = useLargeText();
   const [measurements, setMeasurements] = useState<GlucoseMeasurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,18 +101,26 @@ function HomeScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, getHighContrastStyles(highContrast)]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Chargement...</Text>
+          <Text
+            style={[
+              styles.loadingText,
+              getHighContrastStyles(highContrast),
+              getLargeTextStyles(largeText, 18),
+            ]}
+          >
+            Chargement...
+          </Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, getHighContrastStyles(highContrast)]}>
       <LinearGradient
-        colors={['#667EEA', '#764BA2', '#F093FB']}
+        colors={highContrast ? ['#000000', '#000000', '#000000'] : ['#667EEA', '#764BA2', '#F093FB']}
         style={styles.gradient}
       >
         <ScrollView 
@@ -123,39 +134,103 @@ function HomeScreen() {
             <View style={styles.headerIcon}>
               <Sparkles size={32} color="#FFFFFF" />
             </View>
-            <Text style={styles.title}>{t('home.title')}</Text>
-            <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
+            <Text
+              style={[
+                styles.title,
+                getHighContrastStyles(highContrast),
+                getLargeTextStyles(largeText, 28),
+              ]}
+            >
+              {t('home.title')}
+            </Text>
+            <Text
+              style={[
+                styles.subtitle,
+                getHighContrastStyles(highContrast),
+                getLargeTextStyles(largeText, 16),
+              ]}
+            >
+              {t('home.subtitle')}
+            </Text>
           </View>
 
           {latestMeasurement ? (
-            <View style={styles.currentCard}>
+            <View style={[styles.currentCard, getHighContrastStyles(highContrast)]}>
               <View style={styles.currentHeader}>
-                <Text style={styles.currentLabel}>{t('home.lastMeasurement')}</Text>
+                <Text
+                  style={[
+                    styles.currentLabel,
+                    getHighContrastStyles(highContrast),
+                    getLargeTextStyles(largeText, 14),
+                  ]}
+                >
+                  {t('home.lastMeasurement')}
+                </Text>
                 {getTrendIcon()}
               </View>
               <View style={styles.currentValueContainer}>
-                <Text style={[styles.currentValue, { color: getStatusColor(latestMeasurement.value) }]}>
+                <Text
+                  style={[
+                    styles.currentValue,
+                    getLargeTextStyles(largeText, 48),
+                    { color: getStatusColor(latestMeasurement.value) },
+                  ]}
+                >
                   {latestMeasurement.value}
                 </Text>
-                <Text style={styles.currentUnit}>{unitLabel}</Text>
+                <Text
+                  style={[
+                    styles.currentUnit,
+                    getHighContrastStyles(highContrast),
+                    getLargeTextStyles(largeText, 18),
+                  ]}
+                >
+                  {unitLabel}
+                </Text>
               </View>
-              <Text style={styles.currentTime}>
+              <Text
+                style={[
+                  styles.currentTime,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 14),
+                ]}
+              >
                 {new Date(latestMeasurement.timestamp).toLocaleString('fr-FR')}
               </Text>
-              <Text style={styles.currentType}>
+              <Text
+                style={[
+                  styles.currentType,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 14),
+                ]}
+              >
                 {latestMeasurement.type}
               </Text>
             </View>
           ) : (
-            <View style={styles.emptyCard}>
+            <View style={[styles.emptyCard, getHighContrastStyles(highContrast)]}>
               <LinearGradient
-                colors={['#FF9A9E', '#FECFEF']}
+                colors={highContrast ? ['#000000', '#000000'] : ['#FF9A9E', '#FECFEF']}
                 style={styles.emptyIconContainer}
               >
                 <AlertTriangle size={48} color="#FFFFFF" />
               </LinearGradient>
-              <Text style={styles.emptyTitle}>{t('home.noMeasurements')}</Text>
-              <Text style={styles.emptySubtitle}>
+              <Text
+                style={[
+                  styles.emptyTitle,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 18),
+                ]}
+              >
+                {t('home.noMeasurements')}
+              </Text>
+              <Text
+                style={[
+                  styles.emptySubtitle,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 14),
+                ]}
+              >
                 {t('home.addFirstMeasurement')}
               </Text>
             </View>
@@ -171,14 +246,29 @@ function HomeScreen() {
             <View style={styles.chartHeader}>
               <View style={styles.chartTitleContainer}>
                 <BarChart3 size={20} color="#FFFFFF" />
-                <Text style={styles.chartTitle}>{t('home.chart')}</Text>
+                <Text
+                  style={[
+                    styles.chartTitle,
+                    getHighContrastStyles(highContrast),
+                    getLargeTextStyles(largeText, 18),
+                  ]}
+                >
+                  {t('home.chart')}
+                </Text>
               </View>
-              <View style={styles.periodSelector}>
+              <View style={[styles.periodSelector, getHighContrastStyles(highContrast)]}>
                 <TouchableOpacity
                   style={[styles.periodButton, chartPeriod === 'week' && styles.periodButtonActive]}
                   onPress={() => setChartPeriod('week')}
                 >
-                  <Text style={[styles.periodText, chartPeriod === 'week' && styles.periodTextActive]}>
+                  <Text
+                    style={[
+                      styles.periodText,
+                      chartPeriod === 'week' && styles.periodTextActive,
+                      getHighContrastStyles(highContrast),
+                      getLargeTextStyles(largeText, 12),
+                    ]}
+                  >
                     {t('home.days7')}
                   </Text>
                 </TouchableOpacity>
@@ -186,7 +276,14 @@ function HomeScreen() {
                   style={[styles.periodButton, chartPeriod === 'month' && styles.periodButtonActive]}
                   onPress={() => setChartPeriod('month')}
                 >
-                  <Text style={[styles.periodText, chartPeriod === 'month' && styles.periodTextActive]}>
+                  <Text
+                    style={[
+                      styles.periodText,
+                      chartPeriod === 'month' && styles.periodTextActive,
+                      getHighContrastStyles(highContrast),
+                      getLargeTextStyles(largeText, 12),
+                    ]}
+                  >
                     {t('home.days30')}
                   </Text>
                 </TouchableOpacity>
@@ -202,20 +299,48 @@ function HomeScreen() {
 
           <PDFExport measurements={measurements} />
 
-          <View style={styles.recentContainer}>
-            <Text style={styles.recentTitle}>{t('home.recentMeasurements')}</Text>
+          <View style={[styles.recentContainer, getHighContrastStyles(highContrast)]}>
+            <Text
+              style={[
+                styles.recentTitle,
+                getHighContrastStyles(highContrast),
+                getLargeTextStyles(largeText, 18),
+              ]}
+            >
+              {t('home.recentMeasurements')}
+            </Text>
             {measurements.slice(0, 5).map((measurement, index) => (
               <View key={measurement.id} style={styles.recentItem}>
                 <View style={styles.recentLeft}>
-                  <Text style={[styles.recentValue, { color: getStatusColor(measurement.value) }]}>
+                  <Text
+                    style={[
+                      styles.recentValue,
+                      getLargeTextStyles(largeText, 16),
+                      { color: getStatusColor(measurement.value) },
+                    ]}
+                  >
                     {measurement.value} mg/dL
                   </Text>
-                  <Text style={styles.recentType}>{measurement.type}</Text>
+                  <Text
+                    style={[
+                      styles.recentType,
+                      getHighContrastStyles(highContrast),
+                      getLargeTextStyles(largeText, 12),
+                    ]}
+                  >
+                    {measurement.type}
+                  </Text>
                 </View>
-                <Text style={styles.recentTime}>
+                <Text
+                  style={[
+                    styles.recentTime,
+                    getHighContrastStyles(highContrast),
+                    getLargeTextStyles(largeText, 14),
+                  ]}
+                >
                   {new Date(measurement.timestamp).toLocaleTimeString('fr-FR', {
                     hour: '2-digit',
-                    minute: '2-digit'
+                    minute: '2-digit',
                   })}
                 </Text>
               </View>

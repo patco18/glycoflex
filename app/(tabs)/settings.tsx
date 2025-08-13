@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, TextInput, Alert, AccessibilityInfo } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -97,11 +97,20 @@ export default function SettingsScreen() {
   const toggleHighContrast = async (value: boolean) => {
     setHighContrast(value);
     await updateAccessibilitySetting('highContrast', value);
+    if ((AccessibilityInfo as any).isHighContrastEnabled) {
+      const system = await AccessibilityInfo.isHighContrastEnabled();
+      console.log('High contrast system:', system);
+    }
   };
 
   const toggleLargeText = async (value: boolean) => {
     setLargeText(value);
     await updateAccessibilitySetting('largeText', value);
+    const info: any = AccessibilityInfo;
+    if (info.isBoldTextEnabled) {
+      const system = await info.isBoldTextEnabled();
+      console.log('Bold text system:', system);
+    }
   };
   
   const toggleScreenReader = async (value: boolean) => {

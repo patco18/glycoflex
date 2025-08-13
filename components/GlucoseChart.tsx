@@ -4,6 +4,7 @@ import { LineChart } from 'react-native-chart-kit';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useHighContrast, useLargeText, getHighContrastStyles, getLargeTextStyles } from '@/utils/accessibility';
 
 interface GlucoseChartProps {
   measurements: GlucoseMeasurement[];
@@ -14,6 +15,8 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
   const { userSettings } = useSettings();
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = screenWidth - 32;
+  const highContrast = useHighContrast();
+  const largeText = useLargeText();
   
   // Obtenir les valeurs cibles de l'utilisateur
   const targetMin = parseFloat(userSettings.targetMin) || 70;
@@ -90,8 +93,14 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
   const data = getChartData();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
+    <View style={[styles.container, getHighContrastStyles(highContrast)]}>
+      <Text
+        style={[
+          styles.title,
+          getHighContrastStyles(highContrast),
+          getLargeTextStyles(largeText, 18),
+        ]}
+      >
         Évolution - {period === 'week' ? '7 derniers jours' : '30 derniers jours'}
       </Text>
       
@@ -115,21 +124,51 @@ export default function GlucoseChart({ measurements, period }: GlucoseChartProps
           <View style={styles.legendContainer}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FF3B82' }]} />
-              <Text style={styles.legendText}>Bas (&lt;{targetMin})</Text>
+              <Text
+                style={[
+                  styles.legendText,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 10),
+                ]}
+              >
+                Bas (&lt;{targetMin})
+              </Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#00D9FF' }]} />
-              <Text style={styles.legendText}>Normal ({targetMin}-{targetMax})</Text>
+              <Text
+                style={[
+                  styles.legendText,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 10),
+                ]}
+              >
+                Normal ({targetMin}-{targetMax})
+              </Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#FF6B35' }]} />
-              <Text style={styles.legendText}>Élevé (&gt;{targetMax})</Text>
+              <Text
+                style={[
+                  styles.legendText,
+                  getHighContrastStyles(highContrast),
+                  getLargeTextStyles(largeText, 10),
+                ]}
+              >
+                Élevé (&gt;{targetMax})
+              </Text>
             </View>
           </View>
         </View>
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>
+          <Text
+            style={[
+              styles.emptyText,
+              getHighContrastStyles(highContrast),
+              getLargeTextStyles(largeText, 14),
+            ]}
+          >
             Ajoutez des mesures pour voir le graphique
           </Text>
         </View>

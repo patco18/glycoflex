@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccessibilityInfo } from 'react-native';
+import { useEffect, useState } from 'react';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export interface AccessibilitySettings {
   highContrast: boolean;
@@ -111,6 +113,47 @@ export const getAccessibilityHint = (action: string, t: (key: string) => string)
     edit: 'Double-tap to edit measurement',
     navigate: 'Double-tap to navigate',
   };
-  
+
   return hints[action] || '';
+};
+
+// Hook pour suivre le contraste élevé
+export const useHighContrast = (): boolean => {
+  const { accessibilitySettings } = useSettings();
+  const [systemHighContrast, setSystemHighContrast] = useState(false);
+
+  useEffect(() => {
+    let subscription: { remove: () => void } | undefined;
+    if ((AccessibilityInfo as any).isHighContrastEnabled) {
+      AccessibilityInfo.isHighContrastEnabled().then(setSystemHighContrast);
+      subscription = AccessibilityInfo.addEventListener(
+        'highContrastChanged',
+        setSystemHighContrast
+      );
+    }
+    return () => subscription?.remove();
+  }, []);
+
+  return accessibilitySettings.highContrast || systemHighContrast;
+};
+
+// Hook pour suivre le texte agrandi
+export const useLargeText = (): boolean => {
+  const { accessibilitySettings } = useSettings();
+  const [systemBoldText, setSystemBoldText] = useState(false);
+
+  useEffect(() => {
+    const info: any = AccessibilityInfo;
+    let subscription: { remove: () => void } | undefined;
+    if (info.isBoldTextEnabled) {
+      info.isBoldTextEnabled().then(setSystemBoldText);
+      subscription = AccessibilityInfo.addEventListener(
+        'boldTextChanged',
+        setSystemBoldText
+      );
+    }
+    return () => subscription?.remove();
+  }, []);
+
+  return accessibilitySettings.largeText || systemBoldText;
 };
