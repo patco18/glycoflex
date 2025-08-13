@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { nanoid } from 'nanoid/non-secure';
 
 export interface GlucoseMeasurement {
   id: string;
@@ -9,6 +10,8 @@ export interface GlucoseMeasurement {
 }
 
 const STORAGE_KEY = 'glucose_measurements';
+
+export const generateMeasurementId = (): string => nanoid();
 
 export const getStoredMeasurements = async (): Promise<GlucoseMeasurement[]> => {
   try {
@@ -30,9 +33,9 @@ export const addMeasurement = async (measurement: Omit<GlucoseMeasurement, 'id'>
     const measurements = await getStoredMeasurements();
     const newMeasurement: GlucoseMeasurement = {
       ...measurement,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: generateMeasurementId(),
     };
-    
+
     measurements.unshift(newMeasurement);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(measurements));
     return newMeasurement;

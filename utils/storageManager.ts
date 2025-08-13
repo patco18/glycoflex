@@ -6,7 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/config/firebase';
 import { SecureHybridStorage, EncryptionService } from './secureCloudStorage';
-import { GlucoseMeasurement } from './storage';
+import { GlucoseMeasurement, generateMeasurementId } from './storage';
 
 // Configuration du stockage (utilise les mêmes clés que SecureHybridStorage)
 const STORAGE_CONFIG = {
@@ -75,7 +75,7 @@ export class StorageManager {
       // Fallback : stockage local uniquement
       const newMeasurement: GlucoseMeasurement = {
         ...measurement,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        id: generateMeasurementId(),
       };
 
       await this.saveToLocal(newMeasurement);
