@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, Filter, TrendingUp, Trash2 } from 'lucide-react-native';
+import { Calendar, TrendingUp, Trash2 } from 'lucide-react-native';
 import { SecureHybridStorage } from '@/utils/secureCloudStorage';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
@@ -110,6 +110,55 @@ function HistoryScreen() {
     { id: 'month', label: '30 jours' },
   ];
 
+  const renderItem = ({ item: measurement }: { item: GlucoseMeasurement }) => (
+    <View style={styles.measurementCard}>
+      <View style={styles.measurementHeader}>
+        <View style={styles.measurementLeft}>
+          <Text style={[styles.measurementValue, { color: getStatusColor(measurement.value) }]}>
+            {measurement.value} mg/dL
+          </Text>
+          <Text style={styles.measurementType}>
+            {measurement.type}
+          </Text>
+        </View>
+        <View style={styles.measurementRight}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(measurement.value) + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(measurement.value) }]}> 
+              {getStatusText(measurement.value)}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => handleDeleteMeasurement(measurement.id)}
+          >
+            <Trash2 size={16} color="#DC2626" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.measurementFooter}>
+        <View style={styles.timeContainer}>
+          <Calendar size={14} color="#6B7280" />
+          <Text style={styles.timeText}>
+            {new Date(measurement.timestamp).toLocaleDateString('fr-FR')}
+          </Text>
+          <Text style={styles.timeText}>
+            {new Date(measurement.timestamp).toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Text>
+        </View>
+      </View>
+
+      {measurement.notes && (
+        <View style={styles.notesContainer}>
+          <Text style={styles.notesText}>{measurement.notes}</Text>
+        </View>
+      )}
+    </View>
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -157,10 +206,14 @@ function HistoryScreen() {
           </ScrollView>
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <AdvancedChart measurements={filteredMeasurements} period="month" />
-          
-          {filteredMeasurements.length === 0 ? (
+        <FlatList
+          data={filteredMeasurements}
+          renderItem={renderItem}
+          keyExtractor={(m) => m.id}
+          ListHeaderComponent={
+            <AdvancedChart measurements={filteredMeasurements} period="month" />
+          }
+          ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <TrendingUp size={48} color="#6B7280" />
               <Text style={styles.emptyTitle}>Aucune mesure</Text>
@@ -168,57 +221,11 @@ function HistoryScreen() {
                 Aucune mesure trouvée pour cette période
               </Text>
             </View>
-          ) : (
-            filteredMeasurements.map((measurement) => (
-              <View key={measurement.id} style={styles.measurementCard}>
-                <View style={styles.measurementHeader}>
-                  <View style={styles.measurementLeft}>
-                    <Text style={[styles.measurementValue, { color: getStatusColor(measurement.value) }]}>
-                      {measurement.value} mg/dL
-                    </Text>
-                    <Text style={styles.measurementType}>
-                      {measurement.type}
-                    </Text>
-                  </View>
-                  <View style={styles.measurementRight}>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(measurement.value) + '20' }]}>
-                      <Text style={[styles.statusText, { color: getStatusColor(measurement.value) }]}>
-                        {getStatusText(measurement.value)}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteMeasurement(measurement.id)}
-                    >
-                      <Trash2 size={16} color="#DC2626" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                
-                <View style={styles.measurementFooter}>
-                  <View style={styles.timeContainer}>
-                    <Calendar size={14} color="#6B7280" />
-                    <Text style={styles.timeText}>
-                      {new Date(measurement.timestamp).toLocaleDateString('fr-FR')}
-                    </Text>
-                    <Text style={styles.timeText}>
-                      {new Date(measurement.timestamp).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </Text>
-                  </View>
-                </View>
-                
-                {measurement.notes && (
-                  <View style={styles.notesContainer}>
-                    <Text style={styles.notesText}>{measurement.notes}</Text>
-                  </View>
-                )}
-              </View>
-            ))
-          )}
-        </ScrollView>
+          }
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
       </LinearGradient>
     </SafeAreaView>
   );
@@ -283,8 +290,10 @@ const styles = StyleSheet.create({
   filterTextSelected: {
     color: '#FFFFFF',
   },
-  scrollView: {
+  list: {
     flex: 1,
+  },
+  listContent: {
     paddingHorizontal: 16,
   },
   emptyContainer: {

@@ -13,6 +13,7 @@ import { initializeAppServices } from '@/utils/initServices';
 import { initializeCryptoPolyfills, testCryptoPolyfills } from '@/utils/cryptoInit';
 import { StorageManager } from '@/utils/storageManager';
 import '@/utils/i18n'; // Initialiser i18n
+import { ThemeProvider } from '@/theme';
 
 // Initialiser les polyfills crypto dès que possible AVANT tous les autres imports
 initializeCryptoPolyfills();
@@ -80,9 +81,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <SettingsProvider>
-          <ErrorBoundary>
-            <AppContent />
-          </ErrorBoundary>
+
         </SettingsProvider>
       </AuthProvider>
     </GestureHandlerRootView>
