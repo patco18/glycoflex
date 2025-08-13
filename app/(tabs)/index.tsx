@@ -13,17 +13,28 @@ import ComparisonAnalysis from '@/components/ComparisonAnalysis';
 import PDFExport from '@/components/PDFExport';
 import StatsCards from '@/components/StatsCards';
 import { useMeasurements } from '@/hooks/useMeasurements';
+import { useToast } from '@/hooks/useToast';
+import { useTheme } from '@/theme';
 
 
 function HomeScreen() {
   const { t } = useTranslation();
   const { userSettings } = useSettings();
 
+  const { data: measurements = [], isLoading, error, refetch, isFetching } = useMeasurements();
+  const highContrast = useHighContrast();
+  const largeText = useLargeText();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
   const toast = useToast();
 
   useEffect(() => {
-
+    if (error) {
+      // Affiche une notification simple en cas d'erreur de chargement
+      const message = error instanceof Error ? error.message : String(error);
+      toast.show('Erreur', message);
     }
   }, [error]);
 
