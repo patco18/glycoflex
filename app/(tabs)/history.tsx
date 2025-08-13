@@ -3,6 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar, TrendingUp, Trash2 } from 'lucide-react-native';
+import { Alert, StyleSheet, View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { useMeasurements, useDeleteMeasurement } from '@/hooks/useMeasurements';
+import type { GlucoseMeasurement } from '@/utils/storage';
+import { getGlucoseStatus } from '@/utils/glucose';
+import AdvancedChart from '@/components/AdvancedChart';
 
 
 function HistoryScreen() {
@@ -29,18 +34,18 @@ function HistoryScreen() {
 
     switch (selectedFilter) {
       case 'today':
-        filtered = measurements.filter(m => {
+        filtered = measurements.filter((m: GlucoseMeasurement) => {
           const measurementDate = new Date(m.timestamp);
           return measurementDate.toDateString() === now.toDateString();
         });
         break;
       case 'week':
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        filtered = measurements.filter(m => new Date(m.timestamp) >= weekAgo);
+        filtered = measurements.filter((m: GlucoseMeasurement) => new Date(m.timestamp) >= weekAgo);
         break;
       case 'month':
         const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        filtered = measurements.filter(m => new Date(m.timestamp) >= monthAgo);
+        filtered = measurements.filter((m: GlucoseMeasurement) => new Date(m.timestamp) >= monthAgo);
         break;
       default:
         filtered = measurements;
@@ -50,6 +55,61 @@ function HistoryScreen() {
   };
 
 
+  const renderItem = ({ item: measurement }: { item: GlucoseMeasurement }) => {
+    const date = new Date(measurement.timestamp);
+    const formattedDate = date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    const formattedTime = date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return (
+      <View style={styles.measurementCard}>
+        <View style={styles.measurementHeader}>
+          <View style={styles.measurementLeft}>
+            <Text style={styles.measurementValue}>{measurement.value} mg/dL</Text>
+            <Text style={styles.measurementType}>{measurement.type}</Text>
+          </View>
+          <View style={styles.measurementRight}>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(measurement.value) },
+              ]}
+            >
+              <Text style={[styles.statusText, { color: '#FFFFFF' }]}>
+                {getStatusText(measurement.value)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteMeasurement(measurement.id)}
+            >
+              <Trash2 size={16} color="#FF3B82" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.measurementFooter}>
+          <View style={styles.timeContainer}>
+            <Calendar size={16} color="#A0AEC0" />
+            <Text style={styles.timeText}>{formattedDate}, {formattedTime}</Text>
+          </View>
+          {measurement.notes && (
+            <View style={styles.notesContainer}>
+              <Text style={styles.notesText}>{measurement.notes}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const handleDeleteMeasurement = (id: string) => {
+    Alert.alert(
       'Supprimer la mesure',
       'Êtes-vous sûr de vouloir supprimer cette mesure ?',
       [
@@ -59,7 +119,9 @@ function HistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-
+              await deleteMeasurement.mutateAsync(id).unwrap();
+            } catch (e) {
+              console.error(e);
             }
           },
         },
@@ -95,6 +157,7 @@ function HistoryScreen() {
   ];
 
 
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
