@@ -21,6 +21,7 @@ export interface UserSettings {
   language: Language;
   unit: GlucoseUnit;
   timezone: string;
+  theme: 'light' | 'dark' | 'system';
 }
 
 export interface AccessibilitySettings {
@@ -54,6 +55,7 @@ const defaultUserSettings: UserSettings = {
   language: 'fr',
   unit: 'mgdl',
   timezone: 'Europe/Paris',
+  theme: 'system',
 };
 
 const defaultAccessibilitySettings: AccessibilitySettings = {
