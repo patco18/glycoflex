@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { GlucoseUnit, convertGlucose } from '@/utils/units';
-import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut, User, Database } from 'lucide-react-native';
+import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut, User, Database, Key, RefreshCcw } from 'lucide-react-native';
 import EmergencyCleanup from '@/components/EmergencyCleanup';
 import { useToast } from '@/hooks/useToast';
 
@@ -258,6 +258,42 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           )}
           
+          {/* Database Repair Tool */}
+          {user && (
+            <TouchableOpacity 
+              style={styles.section} 
+              onPress={() => router.push('/database-repair' as any)}
+            >
+              <View style={styles.sectionHeader}>
+                <View style={styles.iconContainer}>
+                  <Database size={24} color="#805AD5" />
+                </View>
+                <Text style={[styles.sectionTitle, { color: '#805AD5' }]}>Réparation Firebase</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                Outil avancé pour analyser et réparer les problèmes de synchronisation avec Firebase.
+              </Text>
+            </TouchableOpacity>
+          )}
+          
+          {/* Encryption Management */}
+          {user && (
+            <TouchableOpacity 
+              style={styles.section} 
+              onPress={() => router.push('/encryption-management' as any)}
+            >
+              <View style={styles.sectionHeader}>
+                <View style={styles.iconContainer}>
+                  <Key size={24} color="#3182CE" />
+                </View>
+                <Text style={[styles.sectionTitle, { color: '#3182CE' }]}>Gestion du chiffrement</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                Gérer les clés de chiffrement et résoudre les problèmes de déchiffrement des données.
+              </Text>
+            </TouchableOpacity>
+          )}
+          
           {/* Cloud Backup Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -295,7 +331,48 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </TouchableOpacity>
+
+            {user && cloudBackup && (
+              <View style={styles.syncTools}>
+                <Text style={styles.syncToolsTitle}>Outils de synchronisation</Text>
+                <Text style={styles.syncToolsDescription}>
+                  En cas de problèmes de synchronisation, utilisez nos outils de diagnostic et réparation.
+                </Text>
+                <View style={styles.syncToolButtons}>
+                  <TouchableOpacity 
+                    style={styles.syncToolButton}
+                    onPress={() => router.push('/database-repair' as any)}
+                  >
+                    <Text style={styles.syncToolButtonText}>Réparer la base</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.syncToolButton}
+                    onPress={() => router.push('/encryption-management' as any)}
+                  >
+                    <Text style={styles.syncToolButtonText}>Gérer le chiffrement</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
+          
+          {/* Firebase Reset Section - Seulement pour les utilisateurs développeurs/admin */}
+          {user && user.email === 'admin@glycoflex.app' && (
+            <TouchableOpacity 
+              style={[styles.section, styles.dangerSection]} 
+              onPress={() => router.push('/reset-firebase' as any)}
+            >
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconContainer, styles.dangerIconContainer]}>
+                  <RefreshCcw size={24} color="#E53E3E" />
+                </View>
+                <Text style={[styles.sectionTitle, { color: '#E53E3E' }]}>Réinitialiser Firebase</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                DANGER: Réinitialisation complète pour nouveau projet Firebase. Réservé aux administrateurs.
+              </Text>
+            </TouchableOpacity>
+          )}
           
           {/* Account Info Section */}
           {user && (
@@ -646,5 +723,46 @@ const styles = StyleSheet.create({
     color: '#667EEA',
     fontSize: 14,
     fontWeight: '600',
+  },
+  syncTools: {
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingTop: 16,
+  },
+  syncToolsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4B5563',
+    marginBottom: 6,
+  },
+  syncToolsDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 12,
+  },
+  syncToolButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  syncToolButton: {
+    backgroundColor: '#667EEA',
+    borderRadius: 8,
+    padding: 10,
+    flex: 0.48,
+    alignItems: 'center',
+  },
+  syncToolButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  dangerSection: {
+    borderWidth: 1,
+    borderColor: '#FED7D7',
+    backgroundColor: '#FFF5F5',
+  },
+  dangerIconContainer: {
+    backgroundColor: '#FED7D7',
   },
 });

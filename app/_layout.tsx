@@ -10,7 +10,7 @@ import { SettingsProvider } from '@/contexts/SettingsContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { initializeAppServices } from '@/utils/initServices';
+import { initializeServices } from '@/utils/initServices';
 import { initializeCryptoPolyfills, testCryptoPolyfills } from '@/utils/cryptoInit';
 import { StorageManager } from '@/utils/storageManager';
 import { queryClient } from '@/lib/queryClient';
@@ -60,7 +60,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepareApp() {
       try {
-        await initializeAppServices();
+        await initializeServices();
         setIsReady(true);
       } catch (error) {
         console.error('Erreur lors de la préparation de l\'application:', error);

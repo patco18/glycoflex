@@ -1,40 +1,57 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
+    // Règles pour les données utilisateur
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Sous-collections pour les données utilisateur
+      match /{subcollection=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
-    function isOwner(data) {
-      return isSignedIn() && data.userId == request.auth.uid;
+    
+    // Règles pour les métadonnées de synchronisation
+    match /sync_metadata/{docId} {
+      // Lire - seulement si le document appartient à l'utilisateur
+      allow read: if request.auth != null && 
+        (resource == null || resource.data.userId == request.auth.uid);
+      
+      // Écrire - vérifier que userId correspond à l'uid de l'utilisateur authentifié
+      allow write: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
     }
-
-    // Encrypted glucose measurements per user
+    
+    // Règles pour les mesures chiffrées
     match /encrypted_measurements/{docId} {
-      allow read: if isOwner(resource.data);
-      allow create: if isOwner(request.resource.data)
-                    && request.resource.data.encryptedData is string
-                    && request.resource.data.timestamp is int
-                    && request.resource.data.lastModified is int
-                    && request.resource.data.measurementId is string;
-      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
-      allow delete: if isOwner(resource.data);
+      // Lire - seulement si le document appartient à l'utilisateur
+      allow read: if request.auth != null && 
+        (resource == null || resource.data.userId == request.auth.uid);
+      
+      // Écrire - vérifier que userId correspond à l'uid de l'utilisateur authentifié
+      allow write: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
     }
-
-    // User devices metadata
-    match /devices/{docId} {
-      allow read: if isOwner(resource.data);
-      allow create: if isOwner(request.resource.data);
-      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
-      allow delete: if isOwner(resource.data);
+    
+    // Règles pour les appareils
+    match /devices/{deviceId} {
+      // Lire - seulement si l'appareil appartient à l'utilisateur
+      allow read: if request.auth != null && 
+        (resource == null || resource.data.userId == request.auth.uid);
+      
+      // Écrire - vérifier que userId correspond à l'uid de l'utilisateur authentifié
+      allow write: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
     }
-
-    // Sync metadata per user (doc id should be the uid)
-    match /sync_metadata/{uid} {
-      allow read, write: if isSignedIn() && uid == request.auth.uid;
+    
+    // Règles pour les mesures de glycémie (alternative)
+    match /glucose_readings/{userId}/{readingId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == userId;
     }
-
-    // Legacy collection disabled (plaintext measurements)
-    match /glucose_measurements/{docId} {
+    
+    // Interdire tout autre accès
+    match /{document=**} {
       allow read, write: if false;
     }
   }

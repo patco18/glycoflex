@@ -1,15 +1,16 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, collection, getDocs } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+const { initializeApp } = require('firebase/app');
+const { getFirestore, doc, setDoc, collection, getDocs } = require('firebase/firestore');
+const { getAuth, signInWithEmailAndPassword } = require('firebase/auth');
 
-// Configuration Firebase (à remplacer par vos valeurs)
+// Configuration Firebase pour le nouveau projet
 const firebaseConfig = {
-  apiKey: "AIzaSyBJVgQ0mc2TLR1i3Fe9BH7n0weo89uUDAM",
-  authDomain: "glycoflex-app.firebaseapp.com",
-  projectId: "glycoflex-app",
-  storageBucket: "glycoflex-app.firebasestorage.app",
-  messagingSenderId: "906933577031",
-  appId: "1:906933577031:web:ea1d777562c4bcadb89862"
+  apiKey: "AIzaSyD2pY4SxzqdB52V-0tj1HdJT1UCP9gz9nc",
+  authDomain: "glycoflex-new.firebaseapp.com",
+  projectId: "glycoflex-new",
+  storageBucket: "glycoflex-new.appspot.com",
+  messagingSenderId: "839016604909",
+  appId: "1:839016604909:web:384a8a81ff6ed6ad6398e4",
+  measurementId: "G-M47EM7SX3M"
 };
 
 // Initialisation Firebase

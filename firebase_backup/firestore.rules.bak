@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(data) {
+      return isSignedIn() && data.userId == request.auth.uid;
+    }
+
+    // Encrypted glucose measurements per user
+    match /encrypted_measurements/{docId} {
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data)
+                    && request.resource.data.encryptedData is string
+                    && request.resource.data.timestamp is int
+                    && request.resource.data.lastModified is int
+                    && request.resource.data.measurementId is string
+                    && (!("isCorrupted" in request.resource.data) || request.resource.data.isCorrupted == false);
+      // Permettre la mise à jour uniquement si le document n'est pas corrompu ou s'il est marqué comme corrompu pour nettoyage
+      allow update: if (isOwner(resource.data) && isOwner(request.resource.data)) || 
+                     (isOwner(resource.data) && "isCorrupted" in request.resource.data && request.resource.data.isCorrupted == true);
+      allow delete: if isOwner(resource.data);
+    }
+
+    // User devices metadata
+    match /devices/{docId} {
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
+      allow delete: if isOwner(resource.data);
+    }
+
+    // Sync metadata per user (doc id should be the uid)
+    match /sync_metadata/{uid} {
+      allow read, write: if isSignedIn() && uid == request.auth.uid;
+    }
+
+    // Legacy collection disabled (plaintext measurements)
+    match /glucose_measurements/{docId} {
+      allow read, write: if false;
+    }
+  }
+}
