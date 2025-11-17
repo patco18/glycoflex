@@ -655,9 +655,8 @@ export class SecureHybridStorage {
 }
 
 // Importation des fonctions nécessaires
-import { Platform } from 'react-native';
-import { 
-  addMeasurement as addMeasurementLocal, 
+import {
+  addMeasurement as addMeasurementLocal,
   getStoredMeasurements as getStoredMeasurementsLocal,
   removeMeasurement as removeMeasurementLocal
 } from './storage';
