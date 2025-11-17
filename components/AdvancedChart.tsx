@@ -18,7 +18,7 @@ export default function AdvancedChart({ measurements, period }: AdvancedChartPro
   const chartWidth = screenWidth - 32;
 
   const getTimeZoneData = () => {
-    const zones = {
+    const zones: Record<'morning' | 'afternoon' | 'evening' | 'night', { label: string; data: number[]; color: string }> = {
       morning: { label: 'Matin (6h-12h)', data: [], color: '#FF9A9E' },
       afternoon: { label: 'Après-midi (12h-18h)', data: [], color: '#FECFEF' },
       evening: { label: 'Soir (18h-22h)', data: [], color: '#A8EDEA' },
@@ -186,6 +186,8 @@ export default function AdvancedChart({ measurements, period }: AdvancedChartPro
             chartConfig={chartConfig}
             style={styles.chart}
             withInnerLines={false}
+            yAxisLabel=""
+            yAxisSuffix=""
             showValuesOnTopOfBars={true}
             fromZero={true}
           />

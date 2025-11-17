@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { GlucoseMeasurement } from '@/utils/storage';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useTheme } from '@/theme';
+import { useHighContrast, useLargeText, getHighContrastStyles, getLargeTextStyles } from '@/utils/accessibility';
 
 
 interface GlucoseChartProps {

@@ -124,13 +124,18 @@ export const useHighContrast = (): boolean => {
 
   useEffect(() => {
     let subscription: { remove: () => void } | undefined;
-    if ((AccessibilityInfo as any).isHighContrastEnabled) {
-      AccessibilityInfo.isHighContrastEnabled().then(setSystemHighContrast);
+
+    if ((AccessibilityInfo as any).isHighTextContrastEnabled) {
+      AccessibilityInfo.isHighTextContrastEnabled()
+        .then(setSystemHighContrast)
+        .catch(() => setSystemHighContrast(false));
+
       subscription = AccessibilityInfo.addEventListener(
-        'highContrastChanged',
+        'highTextContrastChanged',
         setSystemHighContrast
       );
     }
+
     return () => subscription?.remove();
   }, []);
 

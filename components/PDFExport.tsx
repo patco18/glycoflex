@@ -282,8 +282,13 @@ Date d'export: ${now.toLocaleString('fr-FR')}
         if (Platform.OS === 'ios') {
           await Sharing.shareAsync(uri);
         } else {
+          const baseDirectory = FileSystem.Paths?.document?.uri
+            ?? FileSystem.Paths?.cache?.uri
+            ?? (FileSystem as any).documentDirectory
+            ?? (FileSystem as any).cacheDirectory
+            ?? '';
           const pdfName = `glycoflex-report-${new Date().toISOString().split('T')[0]}.pdf`;
-          const destinationUri = FileSystem.documentDirectory + pdfName;
+          const destinationUri = `${baseDirectory}${pdfName}`;
           
           await FileSystem.moveAsync({
             from: uri,
