@@ -162,15 +162,15 @@ export default function SettingsScreen() {
   // Pour ces fonctions de navigation, utilisons simplement des alertes 
   // car les écrans ne sont pas implémentés dans la structure d'app actuelle
   const navigateToProfile = () => {
-    toast.show(t('settings.profile'), t('common.feature_coming_soon'));
+    router.push('/profile-settings');
   };
 
   const navigateToTargets = () => {
-    toast.show(t('settings.targets'), t('common.feature_coming_soon'));
+    router.push('/targets');
   };
 
   const navigateToNotifications = () => {
-    toast.show(t('settings.notifications'), t('common.feature_coming_soon'));
+    router.push('/notifications');
   };
   
   const navigateToSyncSettings = () => {
