@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { db, auth } from '@/config/firebase';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +17,16 @@ export default function FirebaseTestScreen() {
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const toast = useToast();
+  const router = useRouter();
+  const diagnosticsEnabled = useMemo(() => {
+    return __DEV__ || process.env.EXPO_PUBLIC_ENABLE_DIAGNOSTICS === 'true';
+  }, []);
+
+  useEffect(() => {
+    if (!diagnosticsEnabled) {
+      router.replace('/welcome');
+    }
+  }, [diagnosticsEnabled, router]);
   
   const addLog = (message: string) => {
     setLogs(prev => [...prev, message]);
@@ -228,6 +239,17 @@ export default function FirebaseTestScreen() {
     }
   };
   
+  if (!diagnosticsEnabled) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Accès refusé</Text>
+        <Text style={styles.accessDeniedMessage}>
+          Les tests Firebase sont désactivés pour cet environnement.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Test des Permissions Firebase</Text>
@@ -283,6 +305,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
+  },
+  accessDeniedMessage: {
+    fontSize: 14,
+    color: '#4b5563',
+    textAlign: 'center',
   },
   userInfo: {
     backgroundColor: '#f0f0f0',
