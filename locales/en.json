@@ -349,7 +349,18 @@
     "deleteAccountError": "An error occurred while deleting the account.",
     "recentLoginRequired": "Recent Login Required",
     "recentLoginRequiredMessage": "To delete your account, you must have signed in recently.",
-    "notSignedIn": "You are not signed in"
+    "notSignedIn": "You are not signed in",
+    "saveSuccess": "Profile saved.",
+    "saveError": "Unable to save profile.",
+    "validation": {
+      "nameRequired": "Name is required.",
+      "ageInvalid": "Please enter a valid age.",
+      "agePositive": "Please enter an age greater than 0.",
+      "weightInvalid": "Please enter a valid weight.",
+      "weightPositive": "Please enter a weight greater than 0.",
+      "heightInvalid": "Please enter a valid height.",
+      "heightPositive": "Please enter a height greater than 0."
+    }
   },
   "welcome": {
     "title": "Welcome to GlycoFlex",
