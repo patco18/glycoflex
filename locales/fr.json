@@ -349,7 +349,18 @@
     "deleteAccountError": "Une erreur s'est produite lors de la suppression du compte.",
     "recentLoginRequired": "Connexion récente requise",
     "recentLoginRequiredMessage": "Pour supprimer votre compte, vous devez vous reconnecter récemment.",
-    "notSignedIn": "Vous n'êtes pas connecté"
+    "notSignedIn": "Vous n'êtes pas connecté",
+    "saveSuccess": "Profil sauvegardé.",
+    "saveError": "Impossible de sauvegarder le profil.",
+    "validation": {
+      "nameRequired": "Le nom est obligatoire.",
+      "ageInvalid": "Veuillez saisir un âge valide.",
+      "agePositive": "Veuillez saisir un âge supérieur à 0.",
+      "weightInvalid": "Veuillez saisir un poids valide.",
+      "weightPositive": "Veuillez saisir un poids supérieur à 0.",
+      "heightInvalid": "Veuillez saisir une taille valide.",
+      "heightPositive": "Veuillez saisir une taille supérieure à 0."
+    }
   },
   "welcome": {
     "title": "Bienvenue dans GlycoFlex",

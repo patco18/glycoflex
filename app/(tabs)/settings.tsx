@@ -162,7 +162,7 @@ export default function SettingsScreen() {
   // Pour ces fonctions de navigation, utilisons simplement des alertes 
   // car les écrans ne sont pas implémentés dans la structure d'app actuelle
   const navigateToProfile = () => {
-    router.push('/profile-settings');
+    router.push('/profile');
   };
 
   const navigateToTargets = () => {

@@ -45,7 +45,6 @@ function AppContent() {
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="storage-diagnostic" options={{ headerShown: false }} />
-        <Stack.Screen name="profile-settings" options={{ headerShown: false }} />
         <Stack.Screen name="targets" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
       </Stack>

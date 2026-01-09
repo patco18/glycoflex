@@ -34,7 +34,7 @@ export interface AccessibilitySettings {
 interface SettingsContextType {
   userSettings: UserSettings;
   accessibilitySettings: AccessibilitySettings;
-  updateUserSetting: (key: keyof UserSettings, value: string | boolean) => Promise<void>;
+  updateUserSetting: (key: keyof UserSettings, value: string | boolean | string[]) => Promise<void>;
   updateAccessibilitySetting: (key: keyof AccessibilitySettings, value: boolean) => Promise<void>;
   isLoading: boolean;
 }
@@ -117,7 +117,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     }
   };
 
-  const updateUserSetting = async (key: keyof UserSettings, value: string | boolean) => {
+  const updateUserSetting = async (key: keyof UserSettings, value: string | boolean | string[]) => {
     try {
       let newSettings = { ...userSettings };
 
