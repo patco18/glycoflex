@@ -8,13 +8,16 @@ import { useMeasurements, useDeleteMeasurement } from '@/hooks/useMeasurements';
 import type { GlucoseMeasurement } from '@/utils/storage';
 import { getGlucoseStatus } from '@/utils/glucose';
 import AdvancedChart from '@/components/AdvancedChart';
+import { useSettings } from '@/contexts/SettingsContext';
 
 
 function HistoryScreen() {
   const { data: measurements = [], isLoading, error } = useMeasurements();
   const deleteMeasurement = useDeleteMeasurement();
+  const { userSettings } = useSettings();
   const [filteredMeasurements, setFilteredMeasurements] = useState<GlucoseMeasurement[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const unitLabel = userSettings.unit === 'mgdl' ? 'mg/dL' : 'mmol/L';
 
 
   useEffect(() => {
@@ -71,7 +74,7 @@ function HistoryScreen() {
       <View style={styles.measurementCard}>
         <View style={styles.measurementHeader}>
           <View style={styles.measurementLeft}>
-            <Text style={styles.measurementValue}>{measurement.value} mg/dL</Text>
+            <Text style={styles.measurementValue}>{measurement.value} {unitLabel}</Text>
             <Text style={styles.measurementType}>{measurement.type}</Text>
           </View>
           <View style={styles.measurementRight}>
