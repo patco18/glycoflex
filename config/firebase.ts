@@ -20,13 +20,13 @@ function getEnv(name: string): string {
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD2pY4SxzqdB52V-0tj1HdJT1UCP9gz9nc",
-  authDomain: "glycoflex-new.firebaseapp.com",
-  projectId: "glycoflex-new",
-  storageBucket: "glycoflex-new.appspot.com", // Correction de l'URL du bucket de stockage
-  messagingSenderId: "839016604909",
-  appId: "1:839016604909:web:384a8a81ff6ed6ad6398e4",
-  measurementId: "G-M47EM7SX3M"
+  apiKey: getEnv('EXPO_PUBLIC_FIREBASE_API_KEY'),
+  authDomain: getEnv('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+  projectId: getEnv('EXPO_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: getEnv('EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: getEnv('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: getEnv('EXPO_PUBLIC_FIREBASE_APP_ID'),
+  measurementId: getEnv('EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID')
 };
 
 // Initialiser Firebase
