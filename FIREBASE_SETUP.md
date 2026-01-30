@@ -1,5 +1,7 @@
 # Guide de Configuration Firebase pour GlycoFlex
 
+> **Note** : Le stockage Firebase/Firestore est désactivé. GlycoFlex utilise désormais PostgreSQL pour la persistance en ligne. Firebase est conservé uniquement pour l'authentification utilisateur. Consultez le `README.md` pour la configuration PostgreSQL.
+
 ## 🔥 Étapes de configuration Firebase
 
 ### 1. Créer un projet Firebase
@@ -21,6 +23,8 @@
    - Cliquez sur "Save"
 
 ### 3. Configurer Firestore Database
+
+> ⚠️ Cette étape est **optionnelle** et conservée pour compatibilité historique. La persistance en ligne est désormais assurée par PostgreSQL.
 
 1. **Allez dans "Firestore Database"**
 2. **Cliquez sur "Create database"**

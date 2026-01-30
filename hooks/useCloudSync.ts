@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { SecureHybridStorage } from '@/utils/secureCloudStorage';
+import { getCloudStorageProvider } from '@/utils/cloudStorageProvider';
 
 /**
  * Hook pour initialiser automatiquement la synchronisation cloud
@@ -10,26 +10,15 @@ export function useCloudSync() {
   const { user } = useAuth();
 
   useEffect(() => {
+    const { hybrid } = getCloudStorageProvider();
+
     if (user) {
-      // Utilisateur connecté : initialiser la synchronisation cloud
-      SecureHybridStorage.initialize().catch(console.error);
-      
-      // Activer la synchronisation si elle n'est pas déjà activée
-      SecureHybridStorage.setSyncEnabled(true).catch(console.error);
+      hybrid.initialize().catch(console.error);
+      hybrid.setSyncEnabled(true).catch(console.error);
 
-  // Démarrer les écouteurs automatiques et l'abonnement temps réel
-  SecureHybridStorage.startAutoSyncListeners().catch(console.error);
-  SecureHybridStorage.startRealtimeSubscription().catch(console.error);
-      
-      console.log('Synchronisation cloud initialisée pour:', user.email);
+      console.log('Synchronisation cloud PostgreSQL initialisée pour:', user.email);
     } else {
-      // Utilisateur déconnecté : désactiver la synchronisation cloud
-      SecureHybridStorage.setSyncEnabled(false).catch(console.error);
-
-  // Arrêter les écouteurs et l'abonnement
-  SecureHybridStorage.stopRealtimeSubscription().catch(console.error);
-  SecureHybridStorage.stopAutoSyncListeners().catch(console.error);
-      
+      hybrid.setSyncEnabled(false).catch(console.error);
       console.log('Synchronisation cloud désactivée');
     }
   }, [user]);
