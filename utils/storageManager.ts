@@ -8,11 +8,11 @@ import { auth } from '@/config/firebase';
 import { getCloudStorageProvider } from './cloudStorageProvider';
 import { GlucoseMeasurement, generateMeasurementId } from './storage';
 
-// Configuration du stockage (utilise les mêmes clés que SecureHybridStorage)
+// Configuration du stockage (utilise les mêmes clés que le stockage cloud)
 const STORAGE_CONFIG = {
   LOCAL_KEY: 'glucose_measurements', // Utiliser la même clé que storage.ts
-  SYNC_ENABLED_KEY: 'secure_cloud_sync_enabled', // Même clé que SecureHybridStorage
-  LAST_SYNC_KEY: 'last_secure_cloud_sync', // Même clé que SecureHybridStorage
+  SYNC_ENABLED_KEY: 'secure_cloud_sync_enabled', // Même clé que le stockage cloud
+  LAST_SYNC_KEY: 'last_secure_cloud_sync', // Même clé que le stockage cloud
   ERROR_LOG_KEY: 'storage_manager_error_log'
 };
 
@@ -61,7 +61,7 @@ export class StorageManager {
   static async addMeasurement(measurement: Omit<GlucoseMeasurement, 'id'>): Promise<GlucoseMeasurement> {
     try {
       const { hybrid } = getCloudStorageProvider();
-      // Si sync activé et utilisateur connecté, utiliser directement SecureHybridStorage
+      // Si sync activé et utilisateur connecté, utiliser directement le stockage cloud
       if (this.syncEnabled && auth.currentUser) {
         try {
           const savedMeasurement = await hybrid.addMeasurement(measurement);

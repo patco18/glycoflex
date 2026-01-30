@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Database, Cloud, AlertTriangle, CheckCircle, RefreshCw, Trash2, Upload, Shield } from 'lucide-react-native';
+import { Database, Cloud, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react-native';
 import { StorageManager } from '@/utils/storageManager';
-import { EncryptionService, CorruptionCircuitBreaker } from '@/utils/secureCloudStorage';
-import { markProblematicDocumentsAsCorrupted } from '@/utils/cleanupTools';
-import { SyncDiagnostic } from '@/utils/syncDiagnostic';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { getCloudStorageProvider } from '@/utils/cloudStorageProvider';
-import { isPostgresProvider } from '@/utils/syncProvider';
 
 interface StorageStats {
   localCount: number;
@@ -20,12 +16,8 @@ interface StorageStats {
 }
 
 interface DiagnosticInfo {
-  encryptionKeyInitialized: boolean;
-  corruptedDocs: string[];
-  ignoredDocs: string[];
   cloudConnectivity: boolean;
   userAuthenticated: boolean;
-  circuitBreakerStatus: string;
 }
 
 export default function StorageDiagnostic() {
@@ -35,7 +27,6 @@ export default function StorageDiagnostic() {
   const [loading, setLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const toast = useToast();
-  const postgresProvider = isPostgresProvider();
   const { cloud: cloudStorage } = getCloudStorageProvider();
 
   useEffect(() => {
@@ -45,46 +36,21 @@ export default function StorageDiagnostic() {
   const loadDiagnosticData = async () => {
     setLoading(true);
     try {
-      // Charger les statistiques de stockage
       const storageStats = await StorageManager.getStorageStats();
       setStats(storageStats);
 
-      // Diagnostic approfondi
       const diagInfo: DiagnosticInfo = {
-        encryptionKeyInitialized: false,
-        corruptedDocs: [],
-        ignoredDocs: [],
         cloudConnectivity: false,
         userAuthenticated: !!user,
-        circuitBreakerStatus: postgresProvider ? 'PostgreSQL' : await CorruptionCircuitBreaker.getStatus()
       };
 
-      if (!postgresProvider) {
+      if (user) {
         try {
-          // Tester l'initialisation de la clé d'encryption
-          await EncryptionService.initializeEncryptionKey();
-          diagInfo.encryptionKeyInitialized = true;
-        } catch (error) {
-          console.error('Erreur initialisation clé:', error);
-        }
-
-        try {
-          // Récupérer les documents corrompus
-          diagInfo.corruptedDocs = cloudStorage.getCorruptedDocIds();
-          diagInfo.ignoredDocs = await cloudStorage.getIgnoredCorruptedDocIds();
-        } catch (error) {
-          console.error('Erreur récupération docs corrompus:', error);
-        }
-      }
-
-      try {
-        // Tester la connectivité cloud
-        if (user) {
           await cloudStorage.getMeasurements();
           diagInfo.cloudConnectivity = true;
+        } catch (error) {
+          console.error('Erreur connectivité cloud:', error);
         }
-      } catch (error) {
-        console.error('Erreur connectivité cloud:', error);
       }
 
       setDiagnostic(diagInfo);
@@ -115,93 +81,6 @@ export default function StorageDiagnostic() {
     }
   };
 
-  const handleCleanupCorrupted = async () => {
-    if (postgresProvider) {
-      toast.show('Info', 'Nettoyage des documents corrompus indisponible avec PostgreSQL');
-      return;
-    }
-    if (!user) {
-      toast.show('Erreur', 'Vous devez être connecté pour nettoyer');
-      return;
-    }
-
-    toast.show(
-      'Confirmation',
-      'Voulez-vous marquer les documents corrompus pour nettoyage ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: performCleanup }
-      ]
-    );
-  };
-
-  const performCleanup = async () => {
-    setActionInProgress('cleanup');
-    try {
-      await markProblematicDocumentsAsCorrupted();
-      toast.show('Succès', 'Documents corrompus marqués pour nettoyage');
-      await loadDiagnosticData();
-    } catch (error) {
-      console.error('Erreur nettoyage:', error);
-      toast.show('Erreur', 'Échec du nettoyage des documents corrompus');
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
-  const handleRunFullDiagnostic = async () => {
-    if (postgresProvider) {
-      toast.show('Info', 'Diagnostic avancé indisponible avec PostgreSQL');
-      return;
-    }
-    setActionInProgress('diagnostic');
-    try {
-      const fullDiagnostic = await SyncDiagnostic.fullDiagnostic();
-      console.log('📋 Diagnostic complet:', fullDiagnostic);
-      
-      let message = `Diagnostic terminé.\n\n`;
-      message += `Utilisateur: ${fullDiagnostic.user?.authenticated ? 'Connecté' : 'Non connecté'}\n`;
-      message += `Mesures locales: ${fullDiagnostic.storage?.count || 0}\n`;
-      message += `Mesures cloud: ${fullDiagnostic.cloud?.count || 0}\n`;
-      message += `Problèmes: ${fullDiagnostic.issues?.length || 0}\n`;
-      
-      if (fullDiagnostic.issues?.length > 0) {
-        message += `\nProblèmes détectés:\n• ${fullDiagnostic.issues.join('\n• ')}`;
-      }
-      
-      toast.show('Diagnostic Complet', message);
-      await loadDiagnosticData();
-    } catch (error) {
-      console.error('Erreur diagnostic complet:', error);
-      toast.show('Erreur', 'Échec du diagnostic complet');
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
-  const handleForceSyncLocal = async () => {
-    if (postgresProvider) {
-      toast.show('Info', 'Synchronisation forcée indisponible avec PostgreSQL');
-      return;
-    }
-    if (!user) {
-      toast.show('Erreur', 'Vous devez être connecté pour synchroniser');
-      return;
-    }
-
-    setActionInProgress('force-sync-local');
-    try {
-      await SyncDiagnostic.forceSyncLocalToCloud();
-      toast.show('Succès', 'Synchronisation forcée des données locales terminée');
-      await loadDiagnosticData();
-    } catch (error) {
-      console.error('Erreur force sync local:', error);
-      toast.show('Erreur', 'Échec de la synchronisation forcée');
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
   const handleResetStorage = async () => {
     toast.show(
       'Attention !',
@@ -213,68 +92,10 @@ export default function StorageDiagnostic() {
     );
   };
 
-  const handleUnblockUploads = async () => {
-    console.log('🚨 BOUTON DÉBLOQUER UPLOADS CLIQUÉ !');
-    if (postgresProvider) {
-      toast.show('Info', 'Déblocage des uploads indisponible avec PostgreSQL');
-      return;
-    }
-    if (!user) {
-      toast.show('Erreur', 'Vous devez être connecté pour débloquer les uploads');
-      return;
-    }
-
-    await performUnblockUploads();
-  };
-
-  const performUnblockUploads = async () => {
-    setActionInProgress('unblock');
-    try {
-      console.log('🧹 Début du nettoyage radical...');
-      const { SecureHybridStorage } = await import('@/utils/secureCloudStorage');
-      await SecureHybridStorage.forceUploadBlockedMeasurements();
-      
-      // Essayer la synchronisation
-      try {
-        await StorageManager.forceSyncNow();
-        toast.show('Succès', 'Uploads débloqués et synchronisation lancée');
-      } catch (syncError) {
-        console.warn('Sync échouée après nettoyage:', syncError);
-        toast.show('Info', "Nettoyage effectué. Redémarrez l'app pour finaliser.");
-      }
-      
-      await loadDiagnosticData();
-    } catch (error) {
-      console.error('Erreur déblocage uploads:', error);
-      toast.show('Erreur', 'Échec du déblocage: ' + String(error));
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
-  const handleResetCircuitBreaker = async () => {
-    if (postgresProvider) {
-      toast.show('Info', 'Circuit breaker indisponible avec PostgreSQL');
-      return;
-    }
-    setActionInProgress('circuit-reset');
-    try {
-      await CorruptionCircuitBreaker.reset();
-      toast.show('Succès', 'Circuit breaker réinitialisé avec succès');
-      await loadDiagnosticData();
-    } catch (error) {
-      console.error('Erreur reset circuit breaker:', error);
-      toast.show('Erreur', 'Échec du reset: ' + String(error));
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
   const performReset = async () => {
     setActionInProgress('reset');
     try {
       await StorageManager.cleanup();
-      await SyncDiagnostic.cleanupSyncData();
       toast.show('Succès', 'Stockage réinitialisé avec succès');
       await loadDiagnosticData();
     } catch (error) {
@@ -314,7 +135,6 @@ export default function StorageDiagnostic() {
         <View style={styles.content}>
           <Text style={styles.title}>Diagnostic de Stockage</Text>
 
-          {/* Statistiques générales */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Database size={20} color="#667EEA" />
@@ -332,7 +152,7 @@ export default function StorageDiagnostic() {
             </View>
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Synchronisation:</Text>
-              <Text style={[styles.statValue, { color: stats?.syncEnabled ? '#10B981' : '#EF4444' }]}>
+              <Text style={[styles.statValue, { color: stats?.syncEnabled ? '#10B981' : '#EF4444' }]}> 
                 {stats?.syncEnabled ? 'Activée' : 'Désactivée'}
               </Text>
             </View>
@@ -342,13 +162,12 @@ export default function StorageDiagnostic() {
             </View>
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Erreurs:</Text>
-              <Text style={[styles.statValue, { color: (stats?.errorCount || 0) > 0 ? '#EF4444' : '#10B981' }]}>
+              <Text style={[styles.statValue, { color: (stats?.errorCount || 0) > 0 ? '#EF4444' : '#10B981' }]}> 
                 {stats?.errorCount || 0}
               </Text>
             </View>
           </View>
 
-          {/* Diagnostic système */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Cloud size={20} color="#667EEA" />
@@ -359,32 +178,11 @@ export default function StorageDiagnostic() {
               <Text style={styles.diagnosticLabel}>Utilisateur connecté</Text>
             </View>
             <View style={styles.diagnosticRow}>
-              {getStatusIcon(diagnostic?.encryptionKeyInitialized || false)}
-              <Text style={styles.diagnosticLabel}>Clé de chiffrement</Text>
-            </View>
-            <View style={styles.diagnosticRow}>
               {getStatusIcon(diagnostic?.cloudConnectivity || false)}
-              <Text style={styles.diagnosticLabel}>Connectivité cloud</Text>
-            </View>
-            <View style={styles.diagnosticRow}>
-              <Shield size={16} color={diagnostic?.circuitBreakerStatus?.includes('🚨') ? '#EF4444' : '#10B981'} />
-              <Text style={styles.diagnosticLabel}>Circuit Breaker: {diagnostic?.circuitBreakerStatus}</Text>
-            </View>
-            <View style={styles.diagnosticRow}>
-              {getStatusIcon((diagnostic?.corruptedDocs.length || 0) === 0)}
-              <Text style={styles.diagnosticLabel}>
-                Documents corrompus: {diagnostic?.corruptedDocs.length || 0}
-              </Text>
-            </View>
-            <View style={styles.diagnosticRow}>
-              {getStatusIcon((diagnostic?.ignoredDocs.length || 0) === 0)}
-              <Text style={styles.diagnosticLabel}>
-                Documents ignorés: {diagnostic?.ignoredDocs.length || 0}
-              </Text>
+              <Text style={styles.diagnosticLabel}>Connectivité PostgreSQL</Text>
             </View>
           </View>
 
-          {/* Actions */}
           <View style={styles.actionsContainer}>
             <TouchableOpacity
               style={[styles.actionButton, actionInProgress === 'sync' && styles.actionButtonDisabled]}
@@ -394,17 +192,6 @@ export default function StorageDiagnostic() {
               <RefreshCw size={16} color="#FFF" />
               <Text style={styles.actionButtonText}>
                 {actionInProgress === 'sync' ? 'Synchronisation...' : 'Forcer la Sync'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.warningButton, actionInProgress === 'cleanup' && styles.actionButtonDisabled]}
-              onPress={handleCleanupCorrupted}
-              disabled={actionInProgress !== null || !user}
-            >
-              <Trash2 size={16} color="#FFF" />
-              <Text style={styles.actionButtonText}>
-                {actionInProgress === 'cleanup' ? 'Nettoyage...' : 'Nettoyer Documents'}
               </Text>
             </TouchableOpacity>
 
@@ -426,52 +213,6 @@ export default function StorageDiagnostic() {
             >
               <RefreshCw size={16} color="#667EEA" />
               <Text style={[styles.actionButtonText, { color: '#667EEA' }]}>Actualiser</Text>
-            </TouchableOpacity>
-
-            {/* Reset Circuit Breaker */}
-            <TouchableOpacity
-              style={[styles.actionButton, styles.warningButton, actionInProgress === 'circuit-reset' && styles.actionButtonDisabled]}
-              onPress={handleResetCircuitBreaker}
-              disabled={actionInProgress !== null}
-            >
-              <Shield size={16} color="#FFF" />
-              <Text style={styles.actionButtonText}>
-                {actionInProgress === 'circuit-reset' ? 'Reset...' : 'Reset Circuit Breaker'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Nouveaux boutons de diagnostic */}
-            <TouchableOpacity
-              style={[styles.actionButton, actionInProgress === 'diagnostic' && styles.actionButtonDisabled]}
-              onPress={handleRunFullDiagnostic}
-              disabled={actionInProgress !== null}
-            >
-              <AlertTriangle size={16} color="#FFF" />
-              <Text style={styles.actionButtonText}>
-                {actionInProgress === 'diagnostic' ? 'Diagnostic...' : 'Diagnostic Complet'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.warningButton, actionInProgress === 'force-sync-local' && styles.actionButtonDisabled]}
-              onPress={handleForceSyncLocal}
-              disabled={actionInProgress !== null || !user}
-            >
-              <RefreshCw size={16} color="#FFF" />
-              <Text style={styles.actionButtonText}>
-                {actionInProgress === 'force-sync-local' ? 'Sync Local...' : 'Force Sync Local→Cloud'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionButton, styles.warningButton, actionInProgress === 'unblock' && styles.actionButtonDisabled]}
-              onPress={handleUnblockUploads}
-              disabled={actionInProgress !== null || !user}
-            >
-              <Upload size={16} color="#FFF" />
-              <Text style={styles.actionButtonText}>
-                {actionInProgress === 'unblock' ? 'Déblocage...' : 'Débloquer Uploads'}
-              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -521,71 +262,65 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#333',
     marginLeft: 8,
   },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    marginBottom: 6,
   },
   statLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#666',
   },
   statValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
+    color: '#333',
+    fontWeight: '500',
   },
   diagnosticRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    marginBottom: 8,
   },
   diagnosticLabel: {
     fontSize: 14,
-    color: '#1F2937',
-    marginLeft: 12,
+    color: '#333',
+    marginLeft: 8,
   },
   actionsContainer: {
-    marginTop: 20,
+    marginTop: 4,
   },
   actionButton: {
-    backgroundColor: '#667EEA',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    backgroundColor: '#667EEA',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   actionButtonDisabled: {
     opacity: 0.6,
   },
-  warningButton: {
-    backgroundColor: '#F59E0B',
+  actionButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   dangerButton: {
     backgroundColor: '#EF4444',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
     borderColor: '#667EEA',
-  },
-  actionButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
   },
 });

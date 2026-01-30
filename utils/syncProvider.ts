@@ -1,7 +1,5 @@
-export type SyncProvider = 'firebase' | 'postgres';
+export type SyncProvider = 'postgres';
 
-export const getSyncProvider = (): SyncProvider => {
-  return process.env.EXPO_PUBLIC_SYNC_PROVIDER === 'postgres' ? 'postgres' : 'firebase';
-};
+export const getSyncProvider = (): SyncProvider => 'postgres';
 
-export const isPostgresProvider = (): boolean => getSyncProvider() === 'postgres';
+export const isPostgresProvider = (): boolean => true;

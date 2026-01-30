@@ -1,6 +1,6 @@
 # 🩸 GlycoFlex - Application de Suivi Glycémique
 
-Une application mobile moderne pour le suivi de la glycémie avec synchronisation Firebase.
+Une application mobile moderne pour le suivi de la glycémie avec synchronisation PostgreSQL.
 
 ## 🚀 Fonctionnalités
 
@@ -16,11 +16,11 @@ Une application mobile moderne pour le suivi de la glycémie avec synchronisatio
 - Comparaison entre périodes
 - Statistiques détaillées
 
-### ☁️ Synchronisation Firebase
-- Sauvegarde automatique dans le cloud
+### ☁️ Synchronisation PostgreSQL
+- Sauvegarde automatique via API PostgreSQL
 - Synchronisation entre appareils
 - Mode hors ligne avec cache local
-- Backup automatique des données
+- Reprise automatique des opérations
 
 ### 🌍 Multilingue
 - Support français et anglais
@@ -33,33 +33,9 @@ Une application mobile moderne pour le suivi de la glycémie avec synchronisatio
 - Paramètres d'accessibilité
 - Notifications et rappels
 
-## 🔧 Configuration Firebase
-
-### 1. Créer un projet Firebase
-1. Allez sur [Firebase Console](https://console.firebase.google.com/)
-2. Créez un nouveau projet
-3. Activez Firestore Database
-4. Configurez les règles de sécurité
-
-### 2. Configuration de l'application
-1. Créez un fichier `.env` à la racine et ajoutez votre configuration Firebase :
-
-```
-EXPO_PUBLIC_FIREBASE_API_KEY=votre-api-key
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=votre-projet.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=votre-projet-id
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=votre-projet.appspot.com
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-EXPO_PUBLIC_FIREBASE_APP_ID=votre-app-id
-```
-
-Les valeurs seront automatiquement lues par `config/firebase.ts`.
-
-Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.
-
 ## 🐘 Synchronisation PostgreSQL (Neon)
 
-Pour remplacer Firestore par une base PostgreSQL hébergée sur Neon, un petit service API doit être déployé. L'application mobile se connecte ensuite à cette API.
+L'application utilise PostgreSQL pour la persistance en ligne. Un service API doit être déployé pour exposer les opérations de synchronisation.
 
 ### 1. Configurer la base Neon
 1. Créez un projet sur [neon.com](https://neon.com).
@@ -84,23 +60,27 @@ npm run server:dev
 Ajoutez les variables suivantes dans `.env` côté mobile :
 
 ```
-EXPO_PUBLIC_SYNC_PROVIDER=postgres
 EXPO_PUBLIC_SYNC_API_URL=https://votre-api.exemple.com
 ```
 
-L'application utilisera alors PostgreSQL pour la persistance en ligne (les comptes utilisateurs restent gérés par Firebase Auth).
+L'application utilisera PostgreSQL pour la persistance en ligne (les comptes utilisateurs restent gérés par Firebase Auth).
 
-### 3. Règles Firestore
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /glucose_measurements/{document} {
-      allow read, write: if request.auth != null || resource.data.userId == 'anonymous';
-    }
-  }
-}
+## 🔐 Authentification Firebase (comptes utilisateurs)
+
+Firebase Auth reste utilisé pour l'identité et les jetons d'accès. Créez un fichier `.env` à la racine et ajoutez votre configuration Firebase :
+
 ```
+EXPO_PUBLIC_FIREBASE_API_KEY=votre-api-key
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=votre-projet.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=votre-projet-id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=votre-projet.appspot.com
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+EXPO_PUBLIC_FIREBASE_APP_ID=votre-app-id
+```
+
+Les valeurs seront automatiquement lues par `config/firebase.ts`.
+
+Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.
 
 ## 📱 Installation
 
@@ -133,27 +113,26 @@ npm run lint
 │   ├── (tabs)/            # Navigation par onglets
 │   └── _layout.tsx        # Layout principal
 ├── components/            # Composants réutilisables
-├── config/               # Configuration Firebase
+├── config/               # Configuration Firebase Auth
 ├── contexts/             # Contextes React
 ├── utils/                # Utilitaires
 │   ├── storage.ts        # Stockage local
-│   ├── firebaseStorage.ts # Stockage Firebase
-│   └── hybridStorage.ts  # Stockage hybride
+│   ├── postgresCloudStorage.ts # Synchronisation PostgreSQL
+│   └── storageManager.ts # Orchestrateur local/cloud
 └── locales/              # Traductions
 ```
 
 ### Stockage hybride
 L'application utilise un système de stockage hybride :
 - **Local** : AsyncStorage pour le cache et mode hors ligne
-- **Firebase** : Firestore pour la synchronisation cloud
+- **PostgreSQL** : Synchronisation via API sécurisée
 - **Automatique** : Basculement transparent selon la connectivité
 
 ## 🔒 Sécurité
 
 - Données chiffrées en transit
-- Authentification optionnelle
+- Authentification via Firebase Auth
 - Mode anonyme disponible
-- Règles Firestore configurables
 
 ## 📊 Export des données
 

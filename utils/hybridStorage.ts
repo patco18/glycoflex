@@ -1,12 +1,14 @@
-// Deprecated: this module now delegates to SecureHybridStorage
+// Deprecated: this module now delegates to the PostgreSQL hybrid storage.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GlucoseMeasurement } from './storage';
-import { SecureHybridStorage } from './secureCloudStorage';
+import { getCloudStorageProvider } from './cloudStorageProvider';
 
-const SYNC_STATUS_KEY = 'firebase_sync_enabled';
-const LAST_SYNC_KEY = 'last_firebase_sync';
+const SYNC_STATUS_KEY = 'secure_cloud_sync_enabled';
+const LAST_SYNC_KEY = 'last_secure_cloud_sync';
 
-// Vérifier si la synchronisation Firebase est activée
+const getHybridStorage = () => getCloudStorageProvider().hybrid;
+
+// Vérifier si la synchronisation cloud est activée
 export const isFirebaseSyncEnabled = async (): Promise<boolean> => {
   try {
     const enabled = await AsyncStorage.getItem(SYNC_STATUS_KEY);
@@ -16,56 +18,47 @@ export const isFirebaseSyncEnabled = async (): Promise<boolean> => {
   }
 };
 
-// Activer/désactiver la synchronisation Firebase
+// Activer/désactiver la synchronisation cloud
 export const setFirebaseSyncEnabled = async (enabled: boolean): Promise<void> => {
-  return SecureHybridStorage.setSyncEnabled(enabled);
+  return getHybridStorage().setSyncEnabled(enabled);
 };
 
-// Ajouter une mesure (local + Firebase si activé)
+// Ajouter une mesure (local + cloud si activé)
 export const addMeasurementHybrid = async (
   measurement: Omit<GlucoseMeasurement, 'id'>,
   _userId?: string
 ): Promise<void> => {
-  await SecureHybridStorage.addMeasurement(measurement);
+  await getHybridStorage().addMeasurement(measurement);
 };
 
-// Récupérer les mesures (Firebase si activé, sinon local)
+// Récupérer les mesures (cloud si activé, sinon local)
 export const getMeasurementsHybrid = async (_userId?: string): Promise<GlucoseMeasurement[]> => {
-  return SecureHybridStorage.getMeasurements();
+  return getHybridStorage().getMeasurements();
 };
 
-// Supprimer une mesure (local + Firebase si activé)
+// Supprimer une mesure (local + cloud si activé)
 export const removeMeasurementHybrid = async (
   id: string,
   _userId?: string
 ): Promise<void> => {
-  await SecureHybridStorage.deleteMeasurement(id);
-}
+  await getHybridStorage().deleteMeasurement(id);
+};
 
-// Synchroniser les données locales vers Firebase
+// Synchroniser les données locales vers le cloud
 export const syncLocalToFirebase = async (_userId?: string): Promise<void> => {
-  return SecureHybridStorage.syncWithCloud();
+  return getHybridStorage().syncWithCloud();
 };
 
-// Synchroniser Firebase vers local
+// Synchroniser le cloud vers local
 export const syncFirebaseToLocal = async (_userId?: string): Promise<void> => {
-  return SecureHybridStorage.syncWithCloud();
-};
-
-// Mettre à jour l'heure de dernière synchronisation
-const updateLastSyncTime = async (): Promise<void> => {
-  try {
-    await AsyncStorage.setItem(LAST_SYNC_KEY, Date.now().toString());
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour du timestamp de sync:', error);
-  }
+  return getHybridStorage().syncWithCloud();
 };
 
 // Obtenir l'heure de dernière synchronisation
 export const getLastSyncTime = async (): Promise<Date | null> => {
   try {
     const timestamp = await AsyncStorage.getItem(LAST_SYNC_KEY);
-    return timestamp ? new Date(parseInt(timestamp)) : null;
+    return timestamp ? new Date(parseInt(timestamp, 10)) : null;
   } catch (error) {
     return null;
   }
