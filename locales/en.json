@@ -296,7 +296,12 @@
   "enterPhrasePlaceholder": "Enter/paste your recovery phrase",
   "backupNeeded": "Backup the key after generating the phrase",
   "backupInProgress": "Backing up...",
-  "restoreInProgress": "Restoring..."
+  "restoreInProgress": "Restoring...",
+  "postgresProviderLabel": "PostgreSQL (Neon)",
+  "firebaseProviderLabel": "Firebase",
+  "postgresSecurityTitle": "Security & devices",
+  "postgresSecurityDescription": "PostgreSQL sync via Neon does not yet support end-to-end encryption or advanced device management.",
+  "postgresUnsupported": "Feature unavailable with PostgreSQL"
   },
   "auth": {
     "login": "Sign In",

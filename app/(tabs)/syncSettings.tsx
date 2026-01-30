@@ -4,7 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CloudIcon, Lock, Key, RefreshCcw, AlertTriangle, Smartphone, X, ShieldCheck } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { SecureCloudStorage, SecureHybridStorage, EncryptionService } from '@/utils/secureCloudStorage';
+import { EncryptionService } from '@/utils/secureCloudStorage';
+import { getCloudStorageProvider } from '@/utils/cloudStorageProvider';
+import { isPostgresProvider } from '@/utils/syncProvider';
 import { auth } from '@/config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
@@ -31,6 +33,8 @@ export default function SyncSettingsScreen() {
   const [migrationRunning, setMigrationRunning] = useState(false);
   const [corruptedCounts, setCorruptedCounts] = useState<{corrupted:number; ignored:number}>({corrupted:0, ignored:0});
   const toast = useToast();
+  const postgresProvider = isPostgresProvider();
+  const { hybrid: cloudHybrid, cloud: cloudStorage } = getCloudStorageProvider();
   
   useEffect(() => {
     loadSettings();
@@ -52,39 +56,46 @@ export default function SyncSettingsScreen() {
       console.log("👤 Utilisateur authentifié:", auth.currentUser.uid);
       
       // Charger l'état de la synchronisation
-      const enabled = await SecureHybridStorage.isSyncEnabled();
+      const enabled = await cloudHybrid.isSyncEnabled();
       setSyncEnabled(enabled);
       console.log("🔄 Synchronisation activée:", enabled);
       
       // Obtenir l'heure de dernière synchronisation
-      const lastSync = await SecureHybridStorage.getLastSyncTime();
+      const lastSync = await cloudHybrid.getLastSyncTime();
       setLastSyncTime(lastSync);
       console.log("⏱️ Dernière synchronisation:", lastSync ? new Date(lastSync).toLocaleString() : "Jamais");
       
       // Vérifier les opérations en attente
-      const pendingCount = await SecureHybridStorage.getPendingOperationsCount();
+      const pendingCount = await cloudHybrid.getPendingOperationsCount();
       setPendingOperations(pendingCount);
       console.log("📝 Opérations en attente:", pendingCount);
       
-      // Vérifier les conflits
-      const { hasConflicts } = await SecureCloudStorage.checkForConflicts();
-      setHasConflicts(hasConflicts);
-      console.log("⚠️ Conflits détectés:", hasConflicts);
-      
-      // Vérifier si la phrase de récupération existe
-      const hasRecoveryPhrase = await checkRecoveryPhrase();
-      setRecoveryPhraseCreated(hasRecoveryPhrase);
-      console.log("🔑 Phrase de récupération créée:", hasRecoveryPhrase);
-      
-      // Charger les appareils
-      await loadDevices();
+      if (!postgresProvider) {
+        // Vérifier les conflits
+        const { hasConflicts } = await cloudStorage.checkForConflicts();
+        setHasConflicts(hasConflicts);
+        console.log("⚠️ Conflits détectés:", hasConflicts);
+        
+        // Vérifier si la phrase de récupération existe
+        const hasRecoveryPhrase = await checkRecoveryPhrase();
+        setRecoveryPhraseCreated(hasRecoveryPhrase);
+        console.log("🔑 Phrase de récupération créée:", hasRecoveryPhrase);
+        
+        // Charger les appareils
+        await loadDevices();
 
-      // Charger stats docs corrompus
-      try {
-        const corrupted = SecureCloudStorage.getCorruptedDocIds().length;
-        const ignored = (await SecureCloudStorage.getIgnoredCorruptedDocIds()).length;
-        setCorruptedCounts({ corrupted, ignored });
-      } catch {}
+        // Charger stats docs corrompus
+        try {
+          const corrupted = cloudStorage.getCorruptedDocIds().length;
+          const ignored = (await cloudStorage.getIgnoredCorruptedDocIds()).length;
+          setCorruptedCounts({ corrupted, ignored });
+        } catch {}
+      } else {
+        setHasConflicts(false);
+        setRecoveryPhraseCreated(false);
+        setDevices([]);
+        setCorruptedCounts({ corrupted: 0, ignored: 0 });
+      }
       
       console.log("✅ Paramètres de synchronisation chargés avec succès");
     } catch (error) {
@@ -107,7 +118,7 @@ export default function SyncSettingsScreen() {
   const loadDevices = async () => {
     try {
       setDeviceLoading(true);
-      const devicesList = await SecureCloudStorage.getConnectedDevices();
+      const devicesList = await cloudStorage.getConnectedDevices();
       // Map the property name from isCurrent to isCurrentDevice
       setDevices(devicesList.map(device => ({
         ...device,
@@ -129,17 +140,19 @@ export default function SyncSettingsScreen() {
         await createRecoveryPhrase();
       }
       
-      await SecureHybridStorage.setSyncEnabled(value);
+      await cloudHybrid.setSyncEnabled(value);
       setSyncEnabled(value);
       
       if (value) {
         // Effectuer une synchronisation initiale
-        await SecureHybridStorage.syncWithCloud();
-        const lastSync = await SecureHybridStorage.getLastSyncTime();
+        await cloudHybrid.syncWithCloud();
+        const lastSync = await cloudHybrid.getLastSyncTime();
         setLastSyncTime(lastSync);
         
         // Mettre à jour la liste des appareils
-        await loadDevices();
+        if (!postgresProvider) {
+          await loadDevices();
+        }
       }
     } catch (error) {
       console.error('Échec de la modification de la synchronisation:', error);
@@ -182,24 +195,26 @@ export default function SyncSettingsScreen() {
       console.log("👤 Synchronisation pour l'utilisateur:", auth.currentUser.uid);
       
       // Synchroniser avec le cloud
-      await SecureHybridStorage.syncWithCloud();
+      await cloudHybrid.syncWithCloud();
       
       // Recharger les données
-      const lastSync = await SecureHybridStorage.getLastSyncTime();
+      const lastSync = await cloudHybrid.getLastSyncTime();
       setLastSyncTime(lastSync);
       console.log("⏱️ Nouvelle heure de synchronisation:", lastSync ? new Date(lastSync).toLocaleString() : "Erreur");
       
-      const pendingCount = await SecureHybridStorage.getPendingOperationsCount();
+      const pendingCount = await cloudHybrid.getPendingOperationsCount();
       setPendingOperations(pendingCount);
       console.log("📝 Opérations en attente restantes:", pendingCount);
       
-      // Vérifier les conflits
-      const { hasConflicts } = await SecureCloudStorage.checkForConflicts();
-      setHasConflicts(hasConflicts);
-      console.log("⚠️ Conflits après synchronisation:", hasConflicts);
-      
-      // Mettre à jour la liste des appareils
-      await loadDevices();
+      if (!postgresProvider) {
+        // Vérifier les conflits
+        const { hasConflicts } = await cloudStorage.checkForConflicts();
+        setHasConflicts(hasConflicts);
+        console.log("⚠️ Conflits après synchronisation:", hasConflicts);
+        
+        // Mettre à jour la liste des appareils
+        await loadDevices();
+      }
       
       console.log("✅ Synchronisation manuelle terminée avec succès");
       toast.show(t('common.success'), t('syncSettings.syncSuccess'));
@@ -215,6 +230,10 @@ export default function SyncSettingsScreen() {
   };
 
   const backupEncryptionKey = async () => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     if (!recoveryPhraseCreated) {
       toast.show(t('common.error'), t('syncSettings.backupNeeded'));
       return;
@@ -226,7 +245,7 @@ export default function SyncSettingsScreen() {
         toast.show(t('common.error'), t('syncSettings.noPhraseFound'));
         return;
       }
-      await SecureHybridStorage.backupEncryptionKeyWithPhrase(phrase);
+      await cloudHybrid.backupEncryptionKeyWithPhrase(phrase);
       toast.show(t('common.success'), t('syncSettings.backupSuccess'));
     } catch (e) {
       toast.show(t('common.error'), t('syncSettings.backupError'));
@@ -236,17 +255,21 @@ export default function SyncSettingsScreen() {
   };
 
   const restoreEncryptionKey = async () => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     if (!phraseInput.trim()) {
       toast.show(t('common.error'), t('syncSettings.enterRecoveryPhrase'));
       return;
     }
     try {
       setRestoreLoading(true);
-      await SecureHybridStorage.restoreEncryptionKeyWithPhrase(phraseInput.trim());
+      await cloudHybrid.restoreEncryptionKeyWithPhrase(phraseInput.trim());
       toast.show(t('common.success'), t('syncSettings.restoreSuccess'));
       // Après restauration, lancer une synchro
-      await SecureHybridStorage.syncWithCloud();
-      const lastSync = await SecureHybridStorage.getLastSyncTime();
+      await cloudHybrid.syncWithCloud();
+      const lastSync = await cloudHybrid.getLastSyncTime();
       setLastSyncTime(lastSync);
     } catch (e) {
       toast.show(t('common.error'), t('syncSettings.restoreError'));
@@ -256,6 +279,10 @@ export default function SyncSettingsScreen() {
   };
 
   const addLegacyKey = async () => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     if (!legacyKeyInput.trim()) return;
     try {
       await EncryptionService.addLegacyKeyCandidate(legacyKeyInput.trim());
@@ -267,9 +294,13 @@ export default function SyncSettingsScreen() {
   };
 
   const runMigrationScan = async () => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     try {
       setMigrationRunning(true);
-      const result = await SecureCloudStorage.forceMigrationScan();
+      const result = await cloudStorage.forceMigrationScan();
       setCorruptedCounts({ corrupted: result.corrupted, ignored: result.ignored });
       toast.show('Migration', `Cloud: ${result.totalCloud}\nCorrompus: ${result.corrupted}\nIgnorés: ${result.ignored}`);
     } catch (e) {
@@ -280,6 +311,10 @@ export default function SyncSettingsScreen() {
   };
   
   const createRecoveryPhrase = async () => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     try {
       // Générer une phrase de récupération de 12 mots
       const wordList = [
@@ -324,6 +359,10 @@ export default function SyncSettingsScreen() {
   };
   
   const showRecoveryPhrase = async () => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     try {
       const phrase = await SecureStore.getItemAsync(LOCAL_RECOVERY_PHRASE);
       if (phrase) {
@@ -347,8 +386,12 @@ export default function SyncSettingsScreen() {
   };
   
   const removeDevice = async (deviceId: string) => {
+    if (postgresProvider) {
+      toast.show(t('common.error'), t('syncSettings.postgresUnsupported'));
+      return;
+    }
     try {
-      await SecureCloudStorage.removeDevice(deviceId);
+      await cloudStorage.removeDevice(deviceId);
       setDevices(devices.filter(d => d.id !== deviceId));
       toast.show(t('common.success'), t('syncSettings.deviceRemoved'));
     } catch (error) {
@@ -394,6 +437,13 @@ export default function SyncSettingsScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>{t('syncSettings.title')}</Text>
             <Text style={styles.subtitle}>{t('syncSettings.subtitle')}</Text>
+          </View>
+
+          <View style={styles.providerBadge}>
+            <ShieldCheck size={16} color="#667EEA" />
+            <Text style={styles.providerText}>
+              {postgresProvider ? t('syncSettings.postgresProviderLabel') : t('syncSettings.firebaseProviderLabel')}
+            </Text>
           </View>
           
           <View style={styles.section}>
@@ -479,140 +529,152 @@ export default function SyncSettingsScreen() {
             )}
           </View>
           
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Lock size={20} color="#667EEA" />
-              <Text style={styles.sectionTitle}>{t('syncSettings.security')}</Text>
+          {postgresProvider ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Lock size={20} color="#667EEA" />
+                <Text style={styles.sectionTitle}>{t('syncSettings.postgresSecurityTitle')}</Text>
+              </View>
+              <Text style={styles.description}>
+                {t('syncSettings.postgresSecurityDescription')}
+              </Text>
             </View>
-            
-            <Text style={styles.description}>
-              {t('syncSettings.securityDescription')}
-            </Text>
-            
-            <View style={styles.securityInfo}>
-              <View style={styles.securityItem}>
-                <Lock size={16} color="#667EEA" />
-                <Text style={styles.securityText}>
-                  {t('syncSettings.endToEndEncryption')}
-                </Text>
+          ) : (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Lock size={20} color="#667EEA" />
+                <Text style={styles.sectionTitle}>{t('syncSettings.security')}</Text>
               </View>
               
-              <View style={styles.securityItem}>
-                <Key size={16} color="#667EEA" />
-                <Text style={styles.securityText}>
-                  {t('syncSettings.uniqueEncryptionKey')}
-                </Text>
+              <Text style={styles.description}>
+                {t('syncSettings.securityDescription')}
+              </Text>
+              
+              <View style={styles.securityInfo}>
+                <View style={styles.securityItem}>
+                  <Lock size={16} color="#667EEA" />
+                  <Text style={styles.securityText}>
+                    {t('syncSettings.endToEndEncryption')}
+                  </Text>
+                </View>
+                
+                <View style={styles.securityItem}>
+                  <Key size={16} color="#667EEA" />
+                  <Text style={styles.securityText}>
+                    {t('syncSettings.uniqueEncryptionKey')}
+                  </Text>
+                </View>
               </View>
-            </View>
-            
-            <View style={styles.recoverySection}>
-              <Text style={styles.recoveryTitle}>
-                {t('syncSettings.recoveryPhrase')}
-              </Text>
               
-              <Text style={styles.recoveryDescription}>
-                {t('syncSettings.recoveryDescription')}
-              </Text>
-              
-              {recoveryPhraseCreated ? (
-                <TouchableOpacity
-                  style={styles.recoveryButton}
-                  onPress={showRecoveryPhrase}
-                >
-                  <Key size={18} color="#FFFFFF" />
-                  <Text style={styles.recoveryButtonText}>
-                    {t('syncSettings.viewRecoveryPhrase')}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.recoveryButton}
-                  onPress={createRecoveryPhrase}
-                >
-                  <Key size={18} color="#FFFFFF" />
-                  <Text style={styles.recoveryButtonText}>
-                    {t('syncSettings.createRecoveryPhrase')}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              <View style={styles.recoverySection}>
+                <Text style={styles.recoveryTitle}>
+                  {t('syncSettings.recoveryPhrase')}
+                </Text>
+                
+                <Text style={styles.recoveryDescription}>
+                  {t('syncSettings.recoveryDescription')}
+                </Text>
+                
+                {recoveryPhraseCreated ? (
+                  <TouchableOpacity
+                    style={styles.recoveryButton}
+                    onPress={showRecoveryPhrase}
+                  >
+                    <Key size={18} color="#FFFFFF" />
+                    <Text style={styles.recoveryButtonText}>
+                      {t('syncSettings.viewRecoveryPhrase')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.recoveryButton}
+                    onPress={createRecoveryPhrase}
+                  >
+                    <Key size={18} color="#FFFFFF" />
+                    <Text style={styles.recoveryButtonText}>
+                      {t('syncSettings.createRecoveryPhrase')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
 
-              {recoveryPhraseCreated && (
-                <>
-                  <View style={styles.backupContainer}>
-                    <TouchableOpacity
-                      style={[styles.secondaryButton, backupLoading && styles.disabledButton]}
-                      disabled={backupLoading}
-                      onPress={backupEncryptionKey}
-                    >
-                      {backupLoading ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <ShieldCheck size={18} color="#FFFFFF" />
-                      )}
-                      <Text style={styles.secondaryButtonText}>
-                        {backupLoading ? t('syncSettings.backupInProgress') : t('syncSettings.backupKey')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.restoreBlock}>
-                    <Text style={styles.restoreLabel}>{t('syncSettings.restoreKeyDescription')}</Text>
-                    <TextInput
-                      style={styles.phraseInput}
-                      placeholder={t('syncSettings.enterPhrasePlaceholder')}
-                      placeholderTextColor="#888"
-                      multiline
-                      value={phraseInput}
-                      onChangeText={setPhraseInput}
-                    />
-                    <TouchableOpacity
-                      style={[styles.secondaryOutlineButton, restoreLoading && styles.disabledOutlineButton]}
-                      disabled={restoreLoading}
-                      onPress={restoreEncryptionKey}
-                    >
-                      {restoreLoading ? (
-                        <ActivityIndicator size="small" color="#667EEA" />
-                      ) : (
-                        <ShieldCheck size={18} color="#667EEA" />
-                      )}
-                      <Text style={styles.secondaryOutlineButtonText}>
-                        {restoreLoading ? t('syncSettings.restoreInProgress') : t('syncSettings.restoreKey')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.migrationBlock}>
-                    <Text style={styles.migrationTitle}>Migration & Clés legacy</Text>
-                    <Text style={styles.migrationDesc}>Ajoutez une ancienne clé si certaines données historiques ne se déchiffrent plus, puis lancez un scan.</Text>
-                    <TextInput
-                      style={styles.legacyInput}
-                      placeholder="Ancienne clé (optionnel)"
-                      placeholderTextColor="#888"
-                      value={legacyKeyInput}
-                      onChangeText={setLegacyKeyInput}
-                    />
-                    <View style={styles.migrationButtonsRow}>
+                {recoveryPhraseCreated && (
+                  <>
+                    <View style={styles.backupContainer}>
                       <TouchableOpacity
-                        style={[styles.smallButton, !legacyKeyInput.trim() && styles.smallButtonDisabled]}
-                        disabled={!legacyKeyInput.trim()}
-                        onPress={addLegacyKey}
+                        style={[styles.secondaryButton, backupLoading && styles.disabledButton]}
+                        disabled={backupLoading}
+                        onPress={backupEncryptionKey}
                       >
-                        <Text style={styles.smallButtonText}>Ajouter clé</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.smallButtonOutline, migrationRunning && styles.smallButtonDisabled]}
-                        disabled={migrationRunning}
-                        onPress={runMigrationScan}
-                      >
-                        {migrationRunning ? <ActivityIndicator size="small" color="#667EEA" /> : <Text style={styles.smallButtonOutlineText}>Scan migration</Text>}
+                        {backupLoading ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <ShieldCheck size={18} color="#FFFFFF" />
+                        )}
+                        <Text style={styles.secondaryButtonText}>
+                          {backupLoading ? t('syncSettings.backupInProgress') : t('syncSettings.backupKey')}
+                        </Text>
                       </TouchableOpacity>
                     </View>
-                    <Text style={styles.migrationStats}>Corrompus détectés: {corruptedCounts.corrupted} • Ignorés: {corruptedCounts.ignored}</Text>
-                  </View>
-                </>
-              )}
+                    <View style={styles.restoreBlock}>
+                      <Text style={styles.restoreLabel}>{t('syncSettings.restoreKeyDescription')}</Text>
+                      <TextInput
+                        style={styles.phraseInput}
+                        placeholder={t('syncSettings.enterPhrasePlaceholder')}
+                        placeholderTextColor="#888"
+                        multiline
+                        value={phraseInput}
+                        onChangeText={setPhraseInput}
+                      />
+                      <TouchableOpacity
+                        style={[styles.secondaryOutlineButton, restoreLoading && styles.disabledOutlineButton]}
+                        disabled={restoreLoading}
+                        onPress={restoreEncryptionKey}
+                      >
+                        {restoreLoading ? (
+                          <ActivityIndicator size="small" color="#667EEA" />
+                        ) : (
+                          <ShieldCheck size={18} color="#667EEA" />
+                        )}
+                        <Text style={styles.secondaryOutlineButtonText}>
+                          {restoreLoading ? t('syncSettings.restoreInProgress') : t('syncSettings.restoreKey')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.migrationBlock}>
+                      <Text style={styles.migrationTitle}>Migration & Clés legacy</Text>
+                      <Text style={styles.migrationDesc}>Ajoutez une ancienne clé si certaines données historiques ne se déchiffrent plus, puis lancez un scan.</Text>
+                      <TextInput
+                        style={styles.legacyInput}
+                        placeholder="Ancienne clé (optionnel)"
+                        placeholderTextColor="#888"
+                        value={legacyKeyInput}
+                        onChangeText={setLegacyKeyInput}
+                      />
+                      <View style={styles.migrationButtonsRow}>
+                        <TouchableOpacity
+                          style={[styles.smallButton, !legacyKeyInput.trim() && styles.smallButtonDisabled]}
+                          disabled={!legacyKeyInput.trim()}
+                          onPress={addLegacyKey}
+                        >
+                          <Text style={styles.smallButtonText}>Ajouter clé</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.smallButtonOutline, migrationRunning && styles.smallButtonDisabled]}
+                          disabled={migrationRunning}
+                          onPress={runMigrationScan}
+                        >
+                          {migrationRunning ? <ActivityIndicator size="small" color="#667EEA" /> : <Text style={styles.smallButtonOutlineText}>Scan migration</Text>}
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.migrationStats}>Corrompus détectés: {corruptedCounts.corrupted} • Ignorés: {corruptedCounts.ignored}</Text>
+                    </View>
+                  </>
+                )}
+              </View>
             </View>
-          </View>
+          )}
           
-          {syncEnabled && (
+          {syncEnabled && !postgresProvider && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Smartphone size={20} color="#667EEA" />
@@ -706,6 +768,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center'
+  },
+  providerBadge: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    marginBottom: 16
+  },
+  providerText: {
+    color: '#667EEA',
+    fontWeight: '600'
   },
   section: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
