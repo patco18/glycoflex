@@ -5,7 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '@/config/firebase';
-import { SecureHybridStorage, EncryptionService } from './secureCloudStorage';
+import { getCloudStorageProvider } from './cloudStorageProvider';
 import { GlucoseMeasurement, generateMeasurementId } from './storage';
 
 // Configuration du stockage (utilise les mêmes clés que SecureHybridStorage)
@@ -34,6 +34,7 @@ export class StorageManager {
     console.log('🚀 Initialisation du gestionnaire de stockage...');
     
     try {
+      const { hybrid } = getCloudStorageProvider();
       // Vérifier l'état de synchronisation
       this.syncEnabled = await this.isSyncEnabled();
       
@@ -42,7 +43,7 @@ export class StorageManager {
       
       if (this.syncEnabled && auth.currentUser) {
         console.log('✅ Mode synchronisé activé');
-        await SecureHybridStorage.initialize();
+        await hybrid.initialize();
       } else {
         console.log('📱 Mode local uniquement');
       }
@@ -59,14 +60,15 @@ export class StorageManager {
    */
   static async addMeasurement(measurement: Omit<GlucoseMeasurement, 'id'>): Promise<GlucoseMeasurement> {
     try {
+      const { hybrid } = getCloudStorageProvider();
       // Si sync activé et utilisateur connecté, utiliser directement SecureHybridStorage
       if (this.syncEnabled && auth.currentUser) {
         try {
-          const savedMeasurement = await SecureHybridStorage.addMeasurement(measurement);
-          console.log('☁️ Mesure ajoutée via SecureHybridStorage');
+          const savedMeasurement = await hybrid.addMeasurement(measurement);
+          console.log('☁️ Mesure ajoutée via le stockage cloud');
           return savedMeasurement;
         } catch (cloudError) {
-          console.warn('⚠️ Échec SecureHybridStorage, fallback vers local:', cloudError);
+          console.warn('⚠️ Échec stockage cloud, fallback vers local:', cloudError);
           await this.logError('addMeasurement_hybrid', cloudError);
           // Fallback vers stockage local en cas d'échec
         }
@@ -99,7 +101,8 @@ export class StorageManager {
       // Si sync activé et utilisateur connecté, priorité au cloud
       if (this.syncEnabled && auth.currentUser) {
         try {
-          measurements = await SecureHybridStorage.getMeasurements();
+          const { hybrid } = getCloudStorageProvider();
+          measurements = await hybrid.getMeasurements();
           console.log(`☁️ ${measurements.length} mesures récupérées du cloud`);
           
           // Mettre à jour le cache local avec les données cloud
@@ -135,7 +138,8 @@ export class StorageManager {
       // Si sync activé, supprimer du cloud
       if (this.syncEnabled && auth.currentUser) {
         try {
-          await SecureHybridStorage.deleteMeasurement(id);
+          const { hybrid } = getCloudStorageProvider();
+          await hybrid.deleteMeasurement(id);
           console.log('☁️ Mesure supprimée du cloud');
         } catch (cloudError) {
           console.warn('⚠️ Échec suppression cloud, mesure locale supprimée:', cloudError);
@@ -161,10 +165,12 @@ export class StorageManager {
         if (!auth.currentUser) {
           throw new Error('Utilisateur non connecté');
         }
-        await SecureHybridStorage.setSyncEnabled(true);
+        const { hybrid } = getCloudStorageProvider();
+        await hybrid.setSyncEnabled(true);
         console.log('✅ Synchronisation activée');
       } else {
-        await SecureHybridStorage.setSyncEnabled(false);
+        const { hybrid } = getCloudStorageProvider();
+        await hybrid.setSyncEnabled(false);
         console.log('⚠️ Synchronisation désactivée');
       }
     } catch (error) {
@@ -206,7 +212,8 @@ export class StorageManager {
       
       if (this.syncEnabled && auth.currentUser) {
         try {
-          const cloud = await SecureHybridStorage.getMeasurements();
+          const { hybrid } = getCloudStorageProvider();
+          const cloud = await hybrid.getMeasurements();
           cloudCount = cloud.length;
         } catch {
           cloudCount = -1; // Indique une erreur
@@ -245,7 +252,8 @@ export class StorageManager {
 
     try {
       console.log('🔄 Synchronisation forcée en cours...');
-      await SecureHybridStorage.syncWithCloud();
+      const { hybrid } = getCloudStorageProvider();
+      await hybrid.syncWithCloud();
       await AsyncStorage.setItem(STORAGE_CONFIG.LAST_SYNC_KEY, Date.now().toString());
       console.log('✅ Synchronisation forcée terminée');
     } catch (error) {

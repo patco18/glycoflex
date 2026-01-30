@@ -3,12 +3,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { Database, Cloud, AlertTriangle, CheckCircle, RefreshCw, Trash2, Upload, Shield } from 'lucide-react-native';
 import { StorageManager } from '@/utils/storageManager';
-import { SecureCloudStorage, EncryptionService, CorruptionCircuitBreaker } from '@/utils/secureCloudStorage';
+import { EncryptionService, CorruptionCircuitBreaker } from '@/utils/secureCloudStorage';
 import { markProblematicDocumentsAsCorrupted } from '@/utils/cleanupTools';
 import { SyncDiagnostic } from '@/utils/syncDiagnostic';
 import { useAuth } from '@/contexts/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '@/hooks/useToast';
+import { getCloudStorageProvider } from '@/utils/cloudStorageProvider';
+import { isPostgresProvider } from '@/utils/syncProvider';
 
 interface StorageStats {
   localCount: number;
@@ -34,6 +35,8 @@ export default function StorageDiagnostic() {
   const [loading, setLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const toast = useToast();
+  const postgresProvider = isPostgresProvider();
+  const { cloud: cloudStorage } = getCloudStorageProvider();
 
   useEffect(() => {
     loadDiagnosticData();
@@ -53,29 +56,31 @@ export default function StorageDiagnostic() {
         ignoredDocs: [],
         cloudConnectivity: false,
         userAuthenticated: !!user,
-        circuitBreakerStatus: await CorruptionCircuitBreaker.getStatus()
+        circuitBreakerStatus: postgresProvider ? 'PostgreSQL' : await CorruptionCircuitBreaker.getStatus()
       };
 
-      try {
-        // Tester l'initialisation de la clé d'encryption
-        await EncryptionService.initializeEncryptionKey();
-        diagInfo.encryptionKeyInitialized = true;
-      } catch (error) {
-        console.error('Erreur initialisation clé:', error);
-      }
+      if (!postgresProvider) {
+        try {
+          // Tester l'initialisation de la clé d'encryption
+          await EncryptionService.initializeEncryptionKey();
+          diagInfo.encryptionKeyInitialized = true;
+        } catch (error) {
+          console.error('Erreur initialisation clé:', error);
+        }
 
-      try {
-        // Récupérer les documents corrompus
-        diagInfo.corruptedDocs = SecureCloudStorage.getCorruptedDocIds();
-        diagInfo.ignoredDocs = await SecureCloudStorage.getIgnoredCorruptedDocIds();
-      } catch (error) {
-        console.error('Erreur récupération docs corrompus:', error);
+        try {
+          // Récupérer les documents corrompus
+          diagInfo.corruptedDocs = cloudStorage.getCorruptedDocIds();
+          diagInfo.ignoredDocs = await cloudStorage.getIgnoredCorruptedDocIds();
+        } catch (error) {
+          console.error('Erreur récupération docs corrompus:', error);
+        }
       }
 
       try {
         // Tester la connectivité cloud
         if (user) {
-          await SecureCloudStorage.getMeasurements();
+          await cloudStorage.getMeasurements();
           diagInfo.cloudConnectivity = true;
         }
       } catch (error) {
@@ -111,6 +116,10 @@ export default function StorageDiagnostic() {
   };
 
   const handleCleanupCorrupted = async () => {
+    if (postgresProvider) {
+      toast.show('Info', 'Nettoyage des documents corrompus indisponible avec PostgreSQL');
+      return;
+    }
     if (!user) {
       toast.show('Erreur', 'Vous devez être connecté pour nettoyer');
       return;
@@ -141,6 +150,10 @@ export default function StorageDiagnostic() {
   };
 
   const handleRunFullDiagnostic = async () => {
+    if (postgresProvider) {
+      toast.show('Info', 'Diagnostic avancé indisponible avec PostgreSQL');
+      return;
+    }
     setActionInProgress('diagnostic');
     try {
       const fullDiagnostic = await SyncDiagnostic.fullDiagnostic();
@@ -167,6 +180,10 @@ export default function StorageDiagnostic() {
   };
 
   const handleForceSyncLocal = async () => {
+    if (postgresProvider) {
+      toast.show('Info', 'Synchronisation forcée indisponible avec PostgreSQL');
+      return;
+    }
     if (!user) {
       toast.show('Erreur', 'Vous devez être connecté pour synchroniser');
       return;
@@ -198,6 +215,10 @@ export default function StorageDiagnostic() {
 
   const handleUnblockUploads = async () => {
     console.log('🚨 BOUTON DÉBLOQUER UPLOADS CLIQUÉ !');
+    if (postgresProvider) {
+      toast.show('Info', 'Déblocage des uploads indisponible avec PostgreSQL');
+      return;
+    }
     if (!user) {
       toast.show('Erreur', 'Vous devez être connecté pour débloquer les uploads');
       return;
@@ -232,6 +253,10 @@ export default function StorageDiagnostic() {
   };
 
   const handleResetCircuitBreaker = async () => {
+    if (postgresProvider) {
+      toast.show('Info', 'Circuit breaker indisponible avec PostgreSQL');
+      return;
+    }
     setActionInProgress('circuit-reset');
     try {
       await CorruptionCircuitBreaker.reset();

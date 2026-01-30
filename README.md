@@ -57,6 +57,39 @@ Les valeurs seront automatiquement lues par `config/firebase.ts`.
 
 Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.
 
+## 🐘 Synchronisation PostgreSQL (Neon)
+
+Pour remplacer Firestore par une base PostgreSQL hébergée sur Neon, un petit service API doit être déployé. L'application mobile se connecte ensuite à cette API.
+
+### 1. Configurer la base Neon
+1. Créez un projet sur [neon.com](https://neon.com).
+2. Récupérez l'URL de connexion et exécutez le script `server/schema.sql` pour créer la table `glucose_measurements`.
+
+### 2. Démarrer l'API de synchronisation
+Créez un fichier `.env` pour le serveur (ou configurez vos variables d'environnement) :
+
+```
+NEON_DATABASE_URL=postgres://user:password@hostname/dbname
+FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
+PORT=3001
+```
+
+Puis lancez :
+
+```bash
+npm run server:dev
+```
+
+### 3. Configurer l'application Expo
+Ajoutez les variables suivantes dans `.env` côté mobile :
+
+```
+EXPO_PUBLIC_SYNC_PROVIDER=postgres
+EXPO_PUBLIC_SYNC_API_URL=https://votre-api.exemple.com
+```
+
+L'application utilisera alors PostgreSQL pour la persistance en ligne (les comptes utilisateurs restent gérés par Firebase Auth).
+
 ### 3. Règles Firestore
 ```javascript
 rules_version = '2';
