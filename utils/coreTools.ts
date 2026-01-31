@@ -9,12 +9,12 @@ import errorHandler, { ErrorType, ErrorSeverity } from './errorHandler';
 import auditTrail, { AuditEventType } from './auditTrail';
 import dataMigration from './dataMigration';
 import SyncDiagnosticTool from './syncDiagnosticTool';
-import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 import * as Application from 'expo-application';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { auth } from '@/utils/internalAuth';
 
 // Logger principal pour ce module
 const logger = new AppLogger('CoreTools');
@@ -115,7 +115,6 @@ export class CoreTools {
       this.deviceInfo = await this.getDeviceInfo();
       
       // Récupérer l'utilisateur connecté
-      const auth = getAuth();
       this.userId = auth.currentUser?.uid || null;
       
       // Initialiser la gestion des erreurs

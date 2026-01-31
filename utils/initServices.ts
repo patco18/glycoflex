@@ -1,8 +1,8 @@
 import * as Sentry from 'sentry-expo';
 import { getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill';
+import { auth } from '@/utils/internalAuth';
 
 /**
  * Initialisation des services de l'application
@@ -51,6 +51,6 @@ export const initializeServices = async () => {
 
   return {
     firebase: getApp(),
-    auth: getAuth(),
+    auth,
   };
 };

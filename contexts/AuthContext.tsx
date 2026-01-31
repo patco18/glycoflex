@@ -1,21 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '@/config/firebase';
+import { auth, InternalUser } from '@/utils/internalAuth';
 
 interface AuthContextType {
-  user: User | null;
+  user: InternalUser | null;
   loading: boolean;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<InternalUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
       setLoading(false);
     });
@@ -25,9 +25,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      await auth.logout();
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
+      throw error;
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await auth.deleteAccount();
+    } catch (error) {
+      console.error('Erreur lors de la suppression du compte:', error);
       throw error;
     }
   };
@@ -36,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     logout,
+    deleteAccount,
   };
 
   return (

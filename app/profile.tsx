@@ -15,12 +15,11 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { User, Mail, Calendar, Shield, Trash2 } from 'lucide-react-native';
-import { deleteUser } from 'firebase/auth';
 import { useToast } from '@/hooks/useToast';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const { userSettings, updateUserSetting } = useSettings();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -141,7 +140,7 @@ export default function ProfileScreen() {
     try {
       // Note: Pour la suppression de compte, il faut généralement re-authentifier l'utilisateur
       // Ici, nous allons simplement supprimer le compte directement
-      await deleteUser(user);
+      await deleteAccount();
       toast.show(
         t('profile.accountDeleted'),
         t('profile.accountDeletedMessage'),
@@ -155,7 +154,7 @@ export default function ProfileScreen() {
     } catch (error: any) {
       console.error('Erreur lors de la suppression du compte:', error);
       
-      if (error.code === 'auth/requires-recent-login') {
+      if (error?.message?.includes('requires-recent-login')) {
         toast.show(
           t('profile.recentLoginRequired'),
           t('profile.recentLoginRequiredMessage'),
@@ -166,8 +165,8 @@ export default function ProfileScreen() {
             },
             {
               text: t('auth.login'),
-              onPress: () => {
-                logout();
+              onPress: async () => {
+                await logout();
                 router.replace('/auth');
               },
             },
@@ -412,7 +411,7 @@ export default function ProfileScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('profile.accountCreated')}</Text>
               <Text style={styles.infoValue}>
-                {formatDate(user.metadata.creationTime)}
+                {formatDate(user.createdAt)}
               </Text>
             </View>
           </View>
@@ -422,20 +421,7 @@ export default function ProfileScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('profile.lastSignIn')}</Text>
               <Text style={styles.infoValue}>
-                {formatDate(user.metadata.lastSignInTime)}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Shield size={16} color="#64748b" />
-            <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>{t('profile.emailVerified')}</Text>
-              <Text style={[
-                styles.infoValue,
-                { color: user.emailVerified ? '#10B981' : '#EF4444' }
-              ]}>
-                {user.emailVerified ? t('profile.verified') : t('profile.notVerified')}
+                {formatDate(user.lastSignInAt)}
               </Text>
             </View>
           </View>
