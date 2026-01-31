@@ -35,52 +35,11 @@ Une application mobile moderne pour le suivi de la glycémie avec synchronisatio
 
 ## 🐘 Synchronisation PostgreSQL (Neon)
 
-L'application utilise PostgreSQL pour la persistance en ligne. Un service API doit être déployé pour exposer les opérations de synchronisation.
+L'application utilise uniquement PostgreSQL (hébergé sur Neon) pour la persistance en ligne. Un service API expose les opérations d'authentification et de synchronisation.
 
-### 1. Configurer la base Neon
-1. Créez un projet sur [neon.com](https://neon.com).
-2. Récupérez l'URL de connexion et exécutez le script `server/schema.sql` pour créer la table `glucose_measurements`.
-
-### 2. Démarrer l'API de synchronisation
-Créez un fichier `.env` pour le serveur (ou configurez vos variables d'environnement) :
-
-```
-NEON_DATABASE_URL=postgres://user:password@hostname/dbname
-FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-PORT=3001
-```
-
-Puis lancez :
-
-```bash
-npm run server:dev
-```
-
-### 3. Configurer l'application Expo
-Ajoutez les variables suivantes dans `.env` côté mobile :
-
-```
-EXPO_PUBLIC_SYNC_API_URL=https://votre-api.exemple.com
-```
-
-L'application utilisera PostgreSQL pour la persistance en ligne (les comptes utilisateurs restent gérés par Firebase Auth).
-
-## 🔐 Authentification Firebase (comptes utilisateurs)
-
-Firebase Auth reste utilisé pour l'identité et les jetons d'accès. Créez un fichier `.env` à la racine et ajoutez votre configuration Firebase :
-
-```
-EXPO_PUBLIC_FIREBASE_API_KEY=votre-api-key
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=votre-projet.firebaseapp.com
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=votre-projet-id
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=votre-projet.appspot.com
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-EXPO_PUBLIC_FIREBASE_APP_ID=votre-app-id
-```
-
-Les valeurs seront automatiquement lues par `config/firebase.ts`.
-
-Pour la CI/CD, configurez ces variables via `eas secret` ou GitHub Secrets.
+### Guides détaillés
+- [Configurer PostgreSQL sur Neon](docs/neon-postgresql.md)
+- [Référence API (authentification + mesures)](docs/api.md)
 
 ## 📱 Installation
 
@@ -113,7 +72,7 @@ npm run lint
 │   ├── (tabs)/            # Navigation par onglets
 │   └── _layout.tsx        # Layout principal
 ├── components/            # Composants réutilisables
-├── config/               # Configuration Firebase Auth
+├── config/               # Configuration client et constantes
 ├── contexts/             # Contextes React
 ├── utils/                # Utilitaires
 │   ├── storage.ts        # Stockage local
@@ -131,7 +90,7 @@ L'application utilise un système de stockage hybride :
 ## 🔒 Sécurité
 
 - Données chiffrées en transit
-- Authentification via Firebase Auth
+- Authentification via l'API (tokens de session)
 - Mode anonyme disponible
 
 ## 📊 Export des données
