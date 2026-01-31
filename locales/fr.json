@@ -333,7 +333,8 @@
     "wrongPassword": "Mot de passe incorrect",
     "userDisabled": "Ce compte a été désactivé",
     "emailAlreadyInUse": "Cette adresse email est déjà utilisée",
-    "weakPassword": "Le mot de passe est trop faible"
+    "weakPassword": "Le mot de passe est trop faible",
+    "syncUnavailable": "La synchronisation cloud n'est pas configurée sur cette version"
   },
   "profile": {
     "title": "Profil",

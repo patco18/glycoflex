@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AUTH_STORAGE_KEY = 'internal_auth_session';
-const API_BASE_URL = process.env.EXPO_PUBLIC_SYNC_API_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_SYNC_API_URL?.trim();
 const SESSION_DURATION_DAYS = 30;
 
 export interface InternalUser {
@@ -35,7 +35,7 @@ const listeners = new Set<(user: InternalUser | null) => void>();
 
 const ensureApiUrl = () => {
   if (!API_BASE_URL) {
-    throw new Error('Missing EXPO_PUBLIC_SYNC_API_URL for internal auth');
+    throw new Error('SYNC_API_URL_MISSING');
   }
 };
 
@@ -120,6 +120,9 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
 };
 
 export const auth = {
+  get isAvailable() {
+    return Boolean(API_BASE_URL);
+  },
   get currentUser() {
     return currentUser ? { ...currentUser, uid: currentUser.id } : null;
   },
