@@ -1,4 +1,3 @@
-import * as Sentry from 'sentry-expo';
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill';
 import { auth } from '@/utils/internalAuth';
@@ -13,39 +12,38 @@ export const initializeServices = async () => {
     console.log('✅ react-native-get-random-values initialisé');
     console.log('✅ URL polyfills initialisés');
 
-    // Vérifier que crypto.getRandomValues fonctionne
     const testArray = new Uint8Array(10);
     crypto.getRandomValues(testArray);
     console.log('✅ crypto.getRandomValues fonctionne correctement');
     console.log('🧪 Test crypto réussi:', Array.from(testArray).join(','));
   } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation des polyfills crypto:', error);
+    console.error("❌ Erreur lors de l'initialisation des polyfills crypto:", error);
     throw error;
   }
 
-  // Initialiser Sentry pour la gestion des erreurs
+  // Initialiser Sentry uniquement si DSN valide (et surtout: import dynamique)
   try {
-    // Utiliser un DSN valide pour activer Sentry
-    const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN || 'YOUR_SENTRY_DSN_HERE';
+    const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
 
-    if (sentryDsn && sentryDsn !== 'YOUR_SENTRY_DSN_HERE') {
+    // DSN invalide => on n'importe même pas sentry-expo (évite le crash tslib/__extends)
+    if (sentryDsn && sentryDsn.startsWith('http')) {
+      const Sentry = await import('sentry-expo');
+
       Sentry.init({
         dsn: sentryDsn,
         enableInExpoDevelopment: true,
-        debug: __DEV__, // Si true, Sentry affichera les logs de débogage
+        debug: __DEV__,
         tracesSampleRate: 1.0,
       });
-      console.log('✅ Initialisation de Sentry avec un DSN valide');
+
+      console.log('✅ Sentry activé (DSN valide)');
     } else {
-      console.log('✅ Initialisation de Sentry avec un DSN valide');
-      console.error('Invalid Sentry Dsn: YOUR_SENTRY_DSN_HERE');
+      console.log('🟡 Sentry désactivé (DSN vide/invalide)');
     }
   } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation de Sentry:', error);
+    console.error("❌ Erreur lors de l'initialisation de Sentry:", error);
     // Ne pas bloquer l'application si Sentry échoue
   }
 
-  return {
-    auth,
-  };
+  return { auth };
 };
