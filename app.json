@@ -66,8 +66,7 @@
           "file": "sentry-expo/upload-sourcemaps",
           "config": {
             "organization": "your-sentry-organization",
-            "project": "glycoflex",
-            "authToken": "YOUR_AUTH_TOKEN_HERE"
+            "project": "glycoflex"
           }
         }
       ]
