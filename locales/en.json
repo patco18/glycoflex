@@ -333,7 +333,8 @@
     "wrongPassword": "Incorrect password",
     "userDisabled": "This account has been disabled",
     "emailAlreadyInUse": "This email address is already in use",
-    "weakPassword": "Password is too weak"
+    "weakPassword": "Password is too weak",
+    "syncUnavailable": "Cloud sync is not configured on this build"
   },
   "profile": {
     "title": "Profile",

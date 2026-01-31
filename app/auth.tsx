@@ -37,6 +37,11 @@ export default function AuthScreen() {
   };
 
   const handleLogin = async () => {
+    if (!auth.isAvailable) {
+      toast.show(t('auth.error'), t('auth.syncUnavailable'));
+      return;
+    }
+
     if (!validateEmail(email)) {
       toast.show(t('auth.error'), t('auth.invalidEmail'));
       return;
@@ -56,7 +61,9 @@ export default function AuthScreen() {
       console.error('Erreur de connexion:', error);
       let errorMessage = t('auth.loginError');
       const message = error?.message || '';
-      if (message.includes('not-found') || message.includes('not found')) {
+      if (message.includes('SYNC_API_URL_MISSING')) {
+        errorMessage = t('auth.syncUnavailable');
+      } else if (message.includes('not-found') || message.includes('not found')) {
         errorMessage = t('auth.userNotFound');
       } else if (message.includes('invalid-password') || message.includes('wrong-password') || message.includes('invalid password')) {
         errorMessage = t('auth.wrongPassword');
@@ -75,6 +82,11 @@ export default function AuthScreen() {
   };
 
   const handleRegister = async () => {
+    if (!auth.isAvailable) {
+      toast.show(t('auth.error'), t('auth.syncUnavailable'));
+      return;
+    }
+
     if (!validateEmail(email)) {
       toast.show(t('auth.error'), t('auth.invalidEmail'));
       return;
@@ -99,7 +111,9 @@ export default function AuthScreen() {
       console.error('Erreur de création de compte:', error);
       let errorMessage = t('auth.registerError');
       const message = error?.message || '';
-      if (message.includes('already') || message.includes('exists')) {
+      if (message.includes('SYNC_API_URL_MISSING')) {
+        errorMessage = t('auth.syncUnavailable');
+      } else if (message.includes('already') || message.includes('exists')) {
         errorMessage = t('auth.emailAlreadyInUse');
       } else if (message.includes('invalid-email')) {
         errorMessage = t('auth.invalidEmail');
@@ -116,6 +130,11 @@ export default function AuthScreen() {
   };
 
   const handlePasswordReset = async () => {
+    if (!auth.isAvailable) {
+      toast.show(t('auth.error'), t('auth.syncUnavailable'));
+      return;
+    }
+
     if (!validateEmail(email)) {
       toast.show(t('auth.error'), t('auth.invalidEmail'));
       return;
