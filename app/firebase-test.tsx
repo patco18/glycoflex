@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { db, auth } from '@/config/firebase';
+import { db } from '@/config/firebase';
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { DataCleaner } from '@/utils/dataCleaner';

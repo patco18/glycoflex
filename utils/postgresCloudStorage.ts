@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '@/config/firebase';
+import { auth } from '@/utils/internalAuth';
 import { GlucoseMeasurement, generateMeasurementId } from './storage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_SYNC_API_URL;
@@ -17,8 +17,7 @@ const getAuthHeader = async () => {
   if (!auth.currentUser) {
     throw new Error('Utilisateur non connecté');
   }
-  const token = await auth.currentUser.getIdToken();
-  return { Authorization: `Bearer ${token}` };
+  return auth.getAuthHeader();
 };
 
 const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {

@@ -12,13 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  sendPasswordResetEmail,
-  User 
-} from 'firebase/auth';
-import { auth } from '@/config/firebase';
+import { auth } from '@/utils/internalAuth';
 import { useToast } from '@/hooks/useToast';
 
 type AuthMode = 'login' | 'register' | 'reset';
@@ -55,28 +49,23 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await auth.login(email, password);
       toast.show(t('auth.success'), t('auth.loginSuccess'));
       router.replace('/(tabs)');
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
       let errorMessage = t('auth.loginError');
-      
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = t('auth.userNotFound');
-          break;
-        case 'auth/wrong-password':
-          errorMessage = t('auth.wrongPassword');
-          break;
-        case 'auth/invalid-email':
-          errorMessage = t('auth.invalidEmail');
-          break;
-        case 'auth/user-disabled':
-          errorMessage = t('auth.userDisabled');
-          break;
-        default:
-          errorMessage = `${t('auth.loginError')}: ${error.message}`;
+      const message = error?.message || '';
+      if (message.includes('not-found') || message.includes('not found')) {
+        errorMessage = t('auth.userNotFound');
+      } else if (message.includes('invalid-password') || message.includes('wrong-password') || message.includes('invalid password')) {
+        errorMessage = t('auth.wrongPassword');
+      } else if (message.includes('invalid-email')) {
+        errorMessage = t('auth.invalidEmail');
+      } else if (message.includes('disabled')) {
+        errorMessage = t('auth.userDisabled');
+      } else {
+        errorMessage = `${t('auth.loginError')}: ${message}`;
       }
       
       toast.show(t('auth.error'), errorMessage);
@@ -103,25 +92,21 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await auth.register(email, password);
       toast.show(t('auth.success'), t('auth.registerSuccess'));
       router.replace('/(tabs)');
     } catch (error: any) {
       console.error('Erreur de création de compte:', error);
       let errorMessage = t('auth.registerError');
-      
-      switch (error.code) {
-        case 'auth/email-already-in-use':
-          errorMessage = t('auth.emailAlreadyInUse');
-          break;
-        case 'auth/invalid-email':
-          errorMessage = t('auth.invalidEmail');
-          break;
-        case 'auth/weak-password':
-          errorMessage = t('auth.weakPassword');
-          break;
-        default:
-          errorMessage = `${t('auth.registerError')}: ${error.message}`;
+      const message = error?.message || '';
+      if (message.includes('already') || message.includes('exists')) {
+        errorMessage = t('auth.emailAlreadyInUse');
+      } else if (message.includes('invalid-email')) {
+        errorMessage = t('auth.invalidEmail');
+      } else if (message.includes('password')) {
+        errorMessage = t('auth.weakPassword');
+      } else {
+        errorMessage = `${t('auth.registerError')}: ${message}`;
       }
       
       toast.show(t('auth.error'), errorMessage);
@@ -138,7 +123,7 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email);
+      await auth.requestPasswordReset(email);
       toast.show(t('auth.success'), t('auth.passwordResetSent'));
       setMode('login');
     } catch (error: any) {
