@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { CloudIcon, Lock, RefreshCcw, AlertTriangle, ShieldCheck } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { getCloudStorageProvider } from '@/utils/cloudStorageProvider';
-import { auth } from '@/config/firebase';
+import { auth } from '@/utils/internalAuth';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useToast } from '@/hooks/useToast';
 

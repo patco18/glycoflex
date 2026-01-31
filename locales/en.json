@@ -298,7 +298,6 @@
   "backupInProgress": "Backing up...",
   "restoreInProgress": "Restoring...",
   "postgresProviderLabel": "PostgreSQL (Neon)",
-  "firebaseProviderLabel": "Firebase",
   "postgresSecurityTitle": "Security & devices",
   "postgresSecurityDescription": "PostgreSQL sync via Neon does not yet support end-to-end encryption or advanced device management.",
   "postgresUnsupported": "Feature unavailable with PostgreSQL"

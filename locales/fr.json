@@ -298,7 +298,6 @@
   "backupInProgress": "Sauvegarde...",
   "restoreInProgress": "Restauration...",
   "postgresProviderLabel": "PostgreSQL (Neon)",
-  "firebaseProviderLabel": "Firebase",
   "postgresSecurityTitle": "Sécurité & appareils",
   "postgresSecurityDescription": "La synchronisation PostgreSQL via Neon ne prend pas encore en charge le chiffrement bout-à-bout ni la gestion avancée des appareils.",
   "postgresUnsupported": "Fonction indisponible avec PostgreSQL"

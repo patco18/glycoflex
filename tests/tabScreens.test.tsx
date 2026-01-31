@@ -31,28 +31,8 @@ jest.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { uid: '1' } })
 }));
 
-jest.mock('@/config/firebase', () => ({ auth: { currentUser: { uid: '1' } } }));
-
-jest.mock('@/utils/secureCloudStorage', () => ({
-  SecureHybridStorage: {
-    getMeasurements: jest.fn().mockResolvedValue([]),
-    deleteMeasurement: jest.fn().mockResolvedValue(undefined),
-    isSyncEnabled: jest.fn().mockResolvedValue(false),
-    getLastSyncTime: jest.fn().mockResolvedValue(null),
-    getPendingOperationsCount: jest.fn().mockResolvedValue(0),
-    setSyncEnabled: jest.fn().mockResolvedValue(undefined),
-    syncWithCloud: jest.fn().mockResolvedValue(undefined)
-  },
-  SecureCloudStorage: {
-    checkForConflicts: jest.fn().mockResolvedValue({ hasConflicts: false }),
-    getConnectedDevices: jest.fn().mockResolvedValue([]),
-    getCorruptedDocIds: jest.fn().mockReturnValue([]),
-    getIgnoredCorruptedDocIds: jest.fn().mockResolvedValue([])
-  },
-  EncryptionService: {
-    generateRecoveryPhrase: jest.fn().mockResolvedValue('phrase'),
-    createBackupKey: jest.fn().mockResolvedValue('key')
-  }
+jest.mock('@/utils/internalAuth', () => ({
+  auth: { currentUser: { uid: '1' } }
 }));
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -74,7 +54,6 @@ jest.mock('@/components/PredictiveAnalysis', () => () => null);
 jest.mock('@/components/ComparisonAnalysis', () => () => null);
 jest.mock('@/components/PDFExport', () => () => null);
 jest.mock('@/components/StatsCards', () => () => null);
-jest.mock('@/components/EmergencyCleanup', () => () => null);
 
 describe('Tab screens', () => {
   test('Add screen renders', () => {
