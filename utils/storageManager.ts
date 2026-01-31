@@ -4,7 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '@/config/firebase';
+import { auth } from '@/utils/internalAuth';
 import { getCloudStorageProvider } from './cloudStorageProvider';
 import { GlucoseMeasurement, generateMeasurementId } from './storage';
 

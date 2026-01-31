@@ -1,5 +1,4 @@
 import * as Sentry from 'sentry-expo';
-import { getApp } from 'firebase/app';
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill';
 import { auth } from '@/utils/internalAuth';
@@ -9,9 +8,6 @@ import { auth } from '@/utils/internalAuth';
  * Cette fonction initialise tous les services requis par l'application
  */
 export const initializeServices = async () => {
-  // Firebase est déjà initialisé dans ../config/firebase.ts
-  // On utilise simplement les instances existantes
-
   // Tester les polyfills pour crypto
   try {
     console.log('✅ react-native-get-random-values initialisé');
@@ -50,7 +46,6 @@ export const initializeServices = async () => {
   }
 
   return {
-    firebase: getApp(),
     auth,
   };
 };

@@ -9,7 +9,7 @@ const LAST_SYNC_KEY = 'last_secure_cloud_sync';
 const getHybridStorage = () => getCloudStorageProvider().hybrid;
 
 // Vérifier si la synchronisation cloud est activée
-export const isFirebaseSyncEnabled = async (): Promise<boolean> => {
+export const isCloudSyncEnabled = async (): Promise<boolean> => {
   try {
     const enabled = await AsyncStorage.getItem(SYNC_STATUS_KEY);
     return enabled === 'true';
@@ -19,7 +19,7 @@ export const isFirebaseSyncEnabled = async (): Promise<boolean> => {
 };
 
 // Activer/désactiver la synchronisation cloud
-export const setFirebaseSyncEnabled = async (enabled: boolean): Promise<void> => {
+export const setCloudSyncEnabled = async (enabled: boolean): Promise<void> => {
   return getHybridStorage().setSyncEnabled(enabled);
 };
 
@@ -45,12 +45,12 @@ export const removeMeasurementHybrid = async (
 };
 
 // Synchroniser les données locales vers le cloud
-export const syncLocalToFirebase = async (_userId?: string): Promise<void> => {
+export const syncLocalToCloud = async (_userId?: string): Promise<void> => {
   return getHybridStorage().syncWithCloud();
 };
 
 // Synchroniser le cloud vers local
-export const syncFirebaseToLocal = async (_userId?: string): Promise<void> => {
+export const syncCloudToLocal = async (_userId?: string): Promise<void> => {
   return getHybridStorage().syncWithCloud();
 };
 

@@ -8,8 +8,6 @@ import { LogLevel } from './loggerTypes';
 import errorHandler, { ErrorType, ErrorSeverity } from './errorHandler';
 import auditTrail, { AuditEventType } from './auditTrail';
 import dataMigration from './dataMigration';
-import SyncDiagnosticTool from './syncDiagnosticTool';
-import { getFirestore } from 'firebase/firestore';
 import { Platform } from 'react-native';
 import * as Application from 'expo-application';
 import * as Device from 'expo-device';
@@ -322,40 +320,8 @@ export class CoreTools {
       return null;
     }
     
-    logger.info('Exécution du diagnostic...');
-    
-    try {
-      const firestore = getFirestore();
-      const diagnosticTool = new SyncDiagnosticTool(
-        firestore,
-        this.userId,
-        this.deviceInfo.id
-      );
-      
-      const results = await diagnosticTool.runFullDiagnostic();
-      
-      logger.info('Diagnostic terminé', {
-        syncHealthScore: results.stats.syncHealthScore,
-        errorCount: results.errorDetails.length
-      });
-      
-      return results;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      logger.error(`Échec de l'exécution du diagnostic: ${errorMessage}`, {
-        error: errorMessage
-      });
-      
-      errorHandler.handleError(
-        error instanceof Error ? error : new Error(errorMessage),
-        ErrorType.UNEXPECTED,
-        ErrorSeverity.WARNING,
-        { context: 'Sync diagnostic' }
-      );
-      
-      return null;
-    }
+    logger.info('Diagnostics cloud désactivés (Firebase retiré)');
+    return null;
   }
   
   /**
@@ -366,7 +332,6 @@ export class CoreTools {
       return;
     }
     
-    const auth = getAuth();
     const user = auth.currentUser;
     
     if (!user && isLogin) {

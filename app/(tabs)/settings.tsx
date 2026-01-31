@@ -16,8 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { GlucoseUnit, convertGlucose } from '@/utils/units';
-import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut, User, Database, Key, RefreshCcw } from 'lucide-react-native';
-import EmergencyCleanup from '@/components/EmergencyCleanup';
+import { Globe, Paintbrush, Bell, Info, Clock, Languages, Cloud, LogIn, LogOut, User, Database, Key } from 'lucide-react-native';
 import { useToast } from '@/hooks/useToast';
 
 export default function SettingsScreen() {
@@ -173,10 +172,6 @@ export default function SettingsScreen() {
     router.push('/notifications');
   };
   
-  const navigateToSyncSettings = () => {
-    router.push('/storage-diagnostic');
-  };
-
   const navigateToStorageDiagnostic = () => {
     router.push('/storage-diagnostic');
   };
@@ -235,47 +230,6 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Emergency Cleanup Section */}
-          {user && (
-            <EmergencyCleanup />
-          )}
-          
-          {/* Corrupted Documents Manager */}
-          {user && (
-            <TouchableOpacity 
-              style={styles.section} 
-              onPress={() => router.push('/corrupted-documents')}
-            >
-              <View style={styles.sectionHeader}>
-                <View style={styles.iconContainer}>
-                  <Database size={24} color="#F56565" />
-                </View>
-                <Text style={[styles.sectionTitle, { color: '#F56565' }]}>Documents Corrompus</Text>
-              </View>
-              <Text style={styles.sectionDescription}>
-                Gérer les documents corrompus détectés lors de la synchronisation.
-              </Text>
-            </TouchableOpacity>
-          )}
-          
-          {/* Database Repair Tool */}
-          {user && (
-            <TouchableOpacity 
-              style={styles.section} 
-              onPress={() => router.push('/database-repair' as any)}
-            >
-              <View style={styles.sectionHeader}>
-                <View style={styles.iconContainer}>
-                  <Database size={24} color="#805AD5" />
-                </View>
-                <Text style={[styles.sectionTitle, { color: '#805AD5' }]}>Réparation Firebase</Text>
-              </View>
-              <Text style={styles.sectionDescription}>
-                Outil avancé pour analyser et réparer les problèmes de synchronisation avec Firebase.
-              </Text>
-            </TouchableOpacity>
-          )}
-          
           {/* Encryption Management */}
           {user && (
             <TouchableOpacity 
@@ -336,15 +290,9 @@ export default function SettingsScreen() {
               <View style={styles.syncTools}>
                 <Text style={styles.syncToolsTitle}>Outils de synchronisation</Text>
                 <Text style={styles.syncToolsDescription}>
-                  En cas de problèmes de synchronisation, utilisez nos outils de diagnostic et réparation.
+                  En cas de problèmes de synchronisation, utilisez nos outils de diagnostic et de chiffrement.
                 </Text>
                 <View style={styles.syncToolButtons}>
-                  <TouchableOpacity 
-                    style={styles.syncToolButton}
-                    onPress={() => router.push('/database-repair' as any)}
-                  >
-                    <Text style={styles.syncToolButtonText}>Réparer la base</Text>
-                  </TouchableOpacity>
                   <TouchableOpacity 
                     style={styles.syncToolButton}
                     onPress={() => router.push('/encryption-management' as any)}
@@ -355,24 +303,6 @@ export default function SettingsScreen() {
               </View>
             )}
           </View>
-          
-          {/* Firebase Reset Section - Seulement pour les utilisateurs développeurs/admin */}
-          {user && user.email === 'admin@glycoflex.app' && (
-            <TouchableOpacity 
-              style={[styles.section, styles.dangerSection]} 
-              onPress={() => router.push('/reset-firebase' as any)}
-            >
-              <View style={styles.sectionHeader}>
-                <View style={[styles.iconContainer, styles.dangerIconContainer]}>
-                  <RefreshCcw size={24} color="#E53E3E" />
-                </View>
-                <Text style={[styles.sectionTitle, { color: '#E53E3E' }]}>Réinitialiser Firebase</Text>
-              </View>
-              <Text style={styles.sectionDescription}>
-                DANGER: Réinitialisation complète pour nouveau projet Firebase. Réservé aux administrateurs.
-              </Text>
-            </TouchableOpacity>
-          )}
           
           {/* Account Info Section */}
           {user && (

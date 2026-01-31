@@ -2,8 +2,6 @@
  * Système d'audit et de suivi des modifications pour GlycoFlex
  * Permet de tracer les modifications des données importantes
  */
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '../config/firebase';
 import { AppLogger } from './logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -62,7 +60,7 @@ export interface AuditEntry {
  * Options pour les événements d'audit
  */
 export interface AuditOptions {
-  sendToCloud: boolean;   // Envoyer à Firestore
+  sendToCloud: boolean;   // Envoyer vers un backend externe (désactivé)
   storeLocally: boolean;  // Stocker localement
   includeMetadata: boolean; // Inclure les métadonnées
 }
@@ -98,7 +96,7 @@ export class AuditTrail {
     options: Partial<AuditOptions> = {}
   ): Promise<void> {
     const opts: AuditOptions = {
-      sendToCloud: true,
+      sendToCloud: false,
       storeLocally: true,
       includeMetadata: true,
       ...options
@@ -125,16 +123,8 @@ export class AuditTrail {
       await this.storeEventLocally(entry);
     }
     
-    // Envoyer à Firestore
-    if (opts.sendToCloud && this.userId) {
-      try {
-        await this.sendToCloud(entry);
-      } catch (error) {
-        logger.warn('Échec de l\'envoi de l\'audit à Firestore', { 
-          error: error instanceof Error ? error.message : String(error),
-          eventType
-        });
-      }
+    if (opts.sendToCloud) {
+      logger.info('Envoi d\'audit cloud désactivé (Firebase retiré)', { eventType });
     }
     
     logger.debug(`Événement d'audit: ${eventType}`, { 
@@ -175,102 +165,8 @@ export class AuditTrail {
   }
   
   /**
-   * Envoie un événement à Firestore
+   * Envoi cloud désactivé (Firebase retiré).
    */
-  private async sendToCloud(entry: AuditEntry): Promise<void> {
-    if (!this.userId) return;
-    
-    try {
-      const cloudEntry = {
-        ...entry,
-        serverTimestamp: serverTimestamp(),
-        isSyncedToCloud: true
-      };
-      
-      await addDoc(collection(db, 'user_audit_trail'), cloudEntry);
-      
-      // Marquer comme synchronisé dans le stockage local
-      await this.markEntryAsSynced(entry.timestamp);
-    } catch (error) {
-      logger.error('Erreur lors de l\'envoi de l\'audit à Firestore', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    }
-  }
-  
-  /**
-   * Marque une entrée comme synchronisée
-   */
-  private async markEntryAsSynced(timestamp: number): Promise<void> {
-    try {
-      // Récupérer les événements existants
-      const existingData = await AsyncStorage.getItem(this.localAuditStorageKey);
-      if (!existingData) return;
-      
-      const events: AuditEntry[] = JSON.parse(existingData);
-      
-      // Trouver l'entrée correspondante et la marquer comme synchronisée
-      const updatedEvents = events.map(event => {
-        if (event.timestamp === timestamp) {
-          return { ...event, isSyncedToCloud: true };
-        }
-        return event;
-      });
-      
-      // Sauvegarder
-      await AsyncStorage.setItem(this.localAuditStorageKey, JSON.stringify(updatedEvents));
-    } catch (error) {
-      logger.warn('Erreur lors de la mise à jour du statut de synchronisation de l\'audit', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  }
-  
-  /**
-   * Synchronise les événements non synchronisés vers Firestore
-   */
-  async syncPendingEvents(): Promise<number> {
-    if (!this.userId) {
-      logger.warn('Tentative de synchronisation d\'audit sans ID utilisateur');
-      return 0;
-    }
-    
-    try {
-      // Récupérer les événements existants
-      const existingData = await AsyncStorage.getItem(this.localAuditStorageKey);
-      if (!existingData) return 0;
-      
-      const events: AuditEntry[] = JSON.parse(existingData);
-      
-      // Filtrer les événements non synchronisés
-      const unsyncedEvents = events.filter(event => !event.isSyncedToCloud);
-      if (unsyncedEvents.length === 0) return 0;
-      
-      // Synchroniser chaque événement
-      let syncedCount = 0;
-      for (const event of unsyncedEvents) {
-        try {
-          await this.sendToCloud(event);
-          syncedCount++;
-        } catch (error) {
-          logger.error('Erreur lors de la synchronisation d\'un événement d\'audit', {
-            error: error instanceof Error ? error.message : String(error),
-            eventType: event.eventType,
-            timestamp: event.timestamp
-          });
-        }
-      }
-      
-      logger.info(`${syncedCount}/${unsyncedEvents.length} événements d'audit synchronisés`);
-      return syncedCount;
-    } catch (error) {
-      logger.error('Erreur lors de la synchronisation des événements d\'audit', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-      return 0;
-    }
-  }
   
   /**
    * Récupère les événements d'audit locaux
