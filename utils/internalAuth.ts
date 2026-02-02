@@ -102,10 +102,19 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
     ...(options.headers as Record<string, string> | undefined),
   };
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('Network request failed')) {
+      throw new Error('NETWORK_REQUEST_FAILED');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const message = await response.text();

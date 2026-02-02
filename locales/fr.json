@@ -334,7 +334,8 @@
     "userDisabled": "Ce compte a été désactivé",
     "emailAlreadyInUse": "Cette adresse email est déjà utilisée",
     "weakPassword": "Le mot de passe est trop faible",
-    "syncUnavailable": "La synchronisation cloud n'est pas configurée sur cette version"
+    "syncUnavailable": "La synchronisation cloud n'est pas configurée sur cette version",
+    "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion."
   },
   "profile": {
     "title": "Profil",

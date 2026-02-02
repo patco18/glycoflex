@@ -63,6 +63,8 @@ export default function AuthScreen() {
       const message = error?.message || '';
       if (message.includes('SYNC_API_URL_MISSING')) {
         errorMessage = t('auth.syncUnavailable');
+      } else if (message.includes('NETWORK_REQUEST_FAILED')) {
+        errorMessage = t('auth.networkError');
       } else if (message.includes('not-found') || message.includes('not found')) {
         errorMessage = t('auth.userNotFound');
       } else if (message.includes('invalid-password') || message.includes('wrong-password') || message.includes('invalid password')) {
@@ -113,6 +115,8 @@ export default function AuthScreen() {
       const message = error?.message || '';
       if (message.includes('SYNC_API_URL_MISSING')) {
         errorMessage = t('auth.syncUnavailable');
+      } else if (message.includes('NETWORK_REQUEST_FAILED')) {
+        errorMessage = t('auth.networkError');
       } else if (message.includes('already') || message.includes('exists')) {
         errorMessage = t('auth.emailAlreadyInUse');
       } else if (message.includes('invalid-email')) {
@@ -147,7 +151,11 @@ export default function AuthScreen() {
       setMode('login');
     } catch (error: any) {
       console.error('Erreur de réinitialisation:', error);
-      toast.show(t('auth.error'), t('auth.passwordResetError'));
+      const message = error?.message || '';
+      const errorMessage = message.includes('NETWORK_REQUEST_FAILED')
+        ? t('auth.networkError')
+        : t('auth.passwordResetError');
+      toast.show(t('auth.error'), errorMessage);
     } finally {
       setLoading(false);
     }
