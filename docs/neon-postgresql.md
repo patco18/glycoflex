@@ -34,7 +34,7 @@ psql "$NEON_DATABASE_URL" -f server/schema.sql
 
 ## 3. Configurer l'API de synchronisation
 
-Créez un fichier `.env` dans le dossier `server/` (ou configurez vos variables d'environnement).
+Créez un fichier `.env` dans le dossier `server/` (ou configurez vos variables d'environnement). Un exemple est disponible dans `server/.env.example`.
 Voici comment obtenir chaque valeur :
 
 - **NEON_DATABASE_URL** : l'URL PostgreSQL copiée dans Neon (étape 1).
@@ -43,12 +43,12 @@ Voici comment obtenir chaque valeur :
   - En développement Expo, utilisez par exemple `http://localhost:8081` ou l'URL du tunnel si vous utilisez `expo start --tunnel`.
 
 ```bash
-NEON_DATABASE_URL=postgres://user:password@hostname/dbname
+NEON_DATABASE_URL=postgres://user:password@hostname/dbname?sslmode=require
 PORT=3001
 CORS_ORIGIN=https://votre-app.exemple.com
 ```
 
-Puis lancez le serveur :
+Puis lancez le serveur (le fichier `server/.env` est chargé automatiquement) :
 
 ```bash
 npm run server:dev
@@ -56,7 +56,7 @@ npm run server:dev
 
 ## 4. Configurer l'application Expo
 
-Ajoutez l'URL de l'API dans le `.env` côté mobile.
+Ajoutez l'URL de l'API dans le `.env` côté mobile. Un exemple minimal est disponible dans `.env.example`.
 Cette URL doit pointer vers le serveur Node.js (étape 3), par exemple :
 
 - **En local** : `http://localhost:3001`

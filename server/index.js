@@ -1,8 +1,12 @@
+const path = require('path');
+const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
 const { sql } = require('./db');
 const { authenticate, createSession, hashPassword, verifyPassword } = require('./auth');
 const { nanoid } = require('nanoid');
+
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 
