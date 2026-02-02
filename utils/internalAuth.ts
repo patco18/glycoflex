@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const AUTH_STORAGE_KEY = 'internal_auth_session';
 const API_BASE_URL = process.env.EXPO_PUBLIC_SYNC_API_URL?.trim();
 const SESSION_DURATION_DAYS = 30;
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
 
 export interface InternalUser {
   id: string;
@@ -36,6 +37,16 @@ const listeners = new Set<(user: InternalUser | null) => void>();
 const ensureApiUrl = () => {
   if (!API_BASE_URL) {
     throw new Error('SYNC_API_URL_MISSING');
+  }
+};
+
+const isLocalApiUrl = () => {
+  if (!API_BASE_URL) return false;
+  try {
+    const hostname = new URL(API_BASE_URL).hostname;
+    return LOCAL_HOSTNAMES.has(hostname);
+  } catch (error) {
+    return LOCAL_HOSTNAMES.has(API_BASE_URL) || API_BASE_URL.includes('localhost');
   }
 };
 
@@ -111,6 +122,9 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     if (message.includes('Network request failed')) {
+      if (isLocalApiUrl()) {
+        throw new Error('NETWORK_REQUEST_FAILED_LOCALHOST');
+      }
       throw new Error('NETWORK_REQUEST_FAILED');
     }
     throw error;
