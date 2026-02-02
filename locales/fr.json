@@ -335,7 +335,8 @@
     "emailAlreadyInUse": "Cette adresse email est déjà utilisée",
     "weakPassword": "Le mot de passe est trop faible",
     "syncUnavailable": "La synchronisation cloud n'est pas configurée sur cette version",
-    "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion."
+    "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "networkErrorLocalhost": "Impossible de joindre le serveur depuis le téléphone. Utilisez l'adresse IP de votre ordinateur plutôt que localhost ou déployez l'API."
   },
   "profile": {
     "title": "Profil",

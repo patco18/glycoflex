@@ -63,6 +63,8 @@ export default function AuthScreen() {
       const message = error?.message || '';
       if (message.includes('SYNC_API_URL_MISSING')) {
         errorMessage = t('auth.syncUnavailable');
+      } else if (message.includes('NETWORK_REQUEST_FAILED_LOCALHOST')) {
+        errorMessage = t('auth.networkErrorLocalhost');
       } else if (message.includes('NETWORK_REQUEST_FAILED')) {
         errorMessage = t('auth.networkError');
       } else if (message.includes('not-found') || message.includes('not found')) {
@@ -115,6 +117,8 @@ export default function AuthScreen() {
       const message = error?.message || '';
       if (message.includes('SYNC_API_URL_MISSING')) {
         errorMessage = t('auth.syncUnavailable');
+      } else if (message.includes('NETWORK_REQUEST_FAILED_LOCALHOST')) {
+        errorMessage = t('auth.networkErrorLocalhost');
       } else if (message.includes('NETWORK_REQUEST_FAILED')) {
         errorMessage = t('auth.networkError');
       } else if (message.includes('already') || message.includes('exists')) {

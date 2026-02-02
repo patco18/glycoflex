@@ -335,7 +335,8 @@
     "emailAlreadyInUse": "This email address is already in use",
     "weakPassword": "Password is too weak",
     "syncUnavailable": "Cloud sync is not configured on this build",
-    "networkError": "Unable to reach the server. Check your connection."
+    "networkError": "Unable to reach the server. Check your connection.",
+    "networkErrorLocalhost": "Unable to reach the server from your device. Use your computer's IP address instead of localhost or deploy the API."
   },
   "profile": {
     "title": "Profile",
